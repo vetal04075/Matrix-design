@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Polar decomposition — Final v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================
+     OPERATION COLOR PALETTE
+     Modern, distinguishable, works in both themes.
+     Each operation gets an accent color used for: left depth line, header chip,
+     body-title accent, matrix brackets, formula-accent line.
+     ============================ */
+
+  /* Dark theme (default) */
+  :root[data-theme="dark"] {
+    --bg: #0a0a0f;
+    --bg-elev-1: #13131a;
+    --bg-elev-2: #1a1a24;
+    --bg-elev-3: #222230;
+    --border: #2a2a38;
+    --border-soft: #1f1f2a;
+    --text: #ececf1;
+    --text-dim: #9a9aae;
+    --text-faint: #5c5c70;
+
+    /* Brand (primary UI accent) */
+    --brand: #8b8bff;
+    --brand-glow: rgba(139, 139, 255, 0.15);
+
+    /* Operation colors — per-operation semantic */
+    --op-polar: #8b8bff;          /* purple  — Polar decomposition (primary brand) */
+    --op-polar-glow: rgba(139, 139, 255, 0.15);
+    --op-polar-line: rgba(139, 139, 255, 0.4);
+
+    --op-squareroot: #f0abfc;     /* fuchsia — Square root */
+    --op-squareroot-glow: rgba(240, 171, 252, 0.14);
+    --op-squareroot-line: rgba(240, 171, 252, 0.4);
+
+    --op-eigendecomp: #22d3ee;    /* cyan    — Eigendecomposition */
+    --op-eigendecomp-glow: rgba(34, 211, 238, 0.14);
+    --op-eigendecomp-line: rgba(34, 211, 238, 0.4);
+
+    --op-eigenvalues: #6ee7b7;    /* teal    — Eigenvalues */
+    --op-eigenvalues-glow: rgba(110, 231, 183, 0.14);
+    --op-eigenvalues-line: rgba(110, 231, 183, 0.4);
+
+    --op-eigenvectors: #a7f3d0;   /* mint    — Eigenvectors (sibling of eigenvalues) */
+    --op-eigenvectors-glow: rgba(167, 243, 208, 0.14);
+    --op-eigenvectors-line: rgba(167, 243, 208, 0.4);
+
+    --op-determinant: #ffb86e;    /* orange  — Determinant */
+    --op-determinant-glow: rgba(255, 184, 110, 0.14);
+    --op-determinant-line: rgba(255, 184, 110, 0.4);
+
+    --op-inverse: #fb7185;        /* rose    — Inverse */
+    --op-inverse-glow: rgba(251, 113, 133, 0.14);
+    --op-inverse-line: rgba(251, 113, 133, 0.4);
+
+    --op-transpose: #7dd3fc;      /* sky     — Transpose */
+    --op-transpose-glow: rgba(125, 211, 252, 0.14);
+    --op-transpose-line: rgba(125, 211, 252, 0.4);
+
+    --op-lu: #a3e635;             /* lime    — LU decomposition */
+    --op-lu-glow: rgba(163, 230, 53, 0.14);
+    --op-lu-line: rgba(163, 230, 53, 0.4);
+
+    --op-qr: #34d399;             /* emerald — QR decomposition */
+    --op-qr-glow: rgba(52, 211, 153, 0.14);
+    --op-qr-line: rgba(52, 211, 153, 0.4);
+
+    --op-cholesky: #fbbf24;       /* amber   — Cholesky */
+    --op-cholesky-glow: rgba(251, 191, 36, 0.14);
+    --op-cholesky-line: rgba(251, 191, 36, 0.4);
+
+    --op-multiply: #fde047;       /* yellow  — Multiplication */
+    --op-multiply-glow: rgba(253, 224, 71, 0.14);
+    --op-multiply-line: rgba(253, 224, 71, 0.4);
+
+    --op-add: #67e8f9;            /* cyan-2  — Addition */
+    --op-add-glow: rgba(103, 232, 249, 0.14);
+    --op-add-line: rgba(103, 232, 249, 0.4);
+
+    --op-system: #c4b5fd;         /* violet  — System of equations */
+    --op-system-glow: rgba(196, 181, 253, 0.14);
+    --op-system-line: rgba(196, 181, 253, 0.4);
+
+    /* Neutral depth fallback (when operation isn't specified) */
+    --op-neutral: #9a9aae;
+    --op-neutral-glow: rgba(154, 154, 174, 0.12);
+    --op-neutral-line: rgba(154, 154, 174, 0.3);
+
+    /* Progress states */
+    --phase-done: #3a3a50;
+    --phase-pending: #222230;
+
+    /* Success / result */
+    --success: #6ee7b7;
+    --success-glow: rgba(110, 231, 183, 0.12);
+  }
+
+  /* Light theme */
+  :root[data-theme="light"] {
+    --bg: #f5f4f0;
+    --bg-elev-1: #ffffff;
+    --bg-elev-2: #faf9f5;
+    --bg-elev-3: #edece7;
+    --border: #d9d7cf;
+    --border-soft: #e8e6de;
+    --text: #1a1a22;
+    --text-dim: #5c5c6e;
+    --text-faint: #9a9aa8;
+
+    --brand: #5c5cd6;
+    --brand-glow: rgba(92, 92, 214, 0.1);
+
+    /* Light-theme operation colors — darker/more saturated for contrast on light bg */
+    --op-polar: #5c5cd6;
+    --op-polar-glow: rgba(92, 92, 214, 0.08);
+    --op-polar-line: rgba(92, 92, 214, 0.45);
+
+    --op-squareroot: #c026d3;
+    --op-squareroot-glow: rgba(192, 38, 211, 0.08);
+    --op-squareroot-line: rgba(192, 38, 211, 0.4);
+
+    --op-eigendecomp: #0891b2;
+    --op-eigendecomp-glow: rgba(8, 145, 178, 0.08);
+    --op-eigendecomp-line: rgba(8, 145, 178, 0.4);
+
+    --op-eigenvalues: #0fb87a;
+    --op-eigenvalues-glow: rgba(15, 184, 122, 0.1);
+    --op-eigenvalues-line: rgba(15, 184, 122, 0.42);
+
+    --op-eigenvectors: #10b981;
+    --op-eigenvectors-glow: rgba(16, 185, 129, 0.08);
+    --op-eigenvectors-line: rgba(16, 185, 129, 0.38);
+
+    --op-determinant: #c2410c;
+    --op-determinant-glow: rgba(194, 65, 12, 0.08);
+    --op-determinant-line: rgba(194, 65, 12, 0.38);
+
+    --op-inverse: #e11d48;
+    --op-inverse-glow: rgba(225, 29, 72, 0.08);
+    --op-inverse-line: rgba(225, 29, 72, 0.38);
+
+    --op-transpose: #0284c7;
+    --op-transpose-glow: rgba(2, 132, 199, 0.08);
+    --op-transpose-line: rgba(2, 132, 199, 0.38);
+
+    --op-lu: #65a30d;
+    --op-lu-glow: rgba(101, 163, 13, 0.08);
+    --op-lu-line: rgba(101, 163, 13, 0.38);
+
+    --op-qr: #059669;
+    --op-qr-glow: rgba(5, 150, 105, 0.08);
+    --op-qr-line: rgba(5, 150, 105, 0.38);
+
+    --op-cholesky: #d97706;
+    --op-cholesky-glow: rgba(217, 119, 6, 0.08);
+    --op-cholesky-line: rgba(217, 119, 6, 0.38);
+
+    --op-multiply: #a16207;
+    --op-multiply-glow: rgba(161, 98, 7, 0.08);
+    --op-multiply-line: rgba(161, 98, 7, 0.38);
+
+    --op-add: #0e7490;
+    --op-add-glow: rgba(14, 116, 144, 0.08);
+    --op-add-line: rgba(14, 116, 144, 0.38);
+
+    --op-system: #7c3aed;
+    --op-system-glow: rgba(124, 58, 237, 0.08);
+    --op-system-line: rgba(124, 58, 237, 0.38);
+
+    --op-neutral: #5c5c6e;
+    --op-neutral-glow: rgba(92, 92, 110, 0.06);
+    --op-neutral-line: rgba(92, 92, 110, 0.28);
+
+    --phase-done: #c9c7bf;
+    --phase-pending: #e8e6de;
+
+    --success: #0fb87a;
+    --success-glow: rgba(15, 184, 122, 0.08);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; transition: background 0.25s, color 0.25s; }
+  body { width: 390px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: 120px; }
+
+  /* ============================
+     STATUS BAR
+     ============================ */
+  .status-bar {
+    height: 44px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px 0 32px; font-size: 15px; font-weight: 600;
+  }
+  .status-bar .right { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+
+  /* ============================
+     TOP NAV
+     ============================ */
+  .top-nav {
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 12px;
+    position: sticky; top: 0; z-index: 50;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .top-nav .title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 6px; }
+  .top-nav .title .dot { color: var(--text-faint); }
+  .top-nav .icon-btn {
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    color: var(--text-dim); background: transparent; border: none; cursor: pointer;
+    transition: color 0.2s;
+  }
+  .top-nav .icon-btn:hover { color: var(--text); }
+  .nav-right { display: flex; align-items: center; gap: 2px; }
+
+  /* ============================
+     PROGRESS BAR (E3 with operation coloring)
+     ============================ */
+  .progress-shell {
+    position: sticky; top: 52px; z-index: 45;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--border-soft);
+    padding: 11px 16px 13px;
+  }
+  .phase-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 9px;
+  }
+  .phase-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .phase-chip {
+    font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 600;
+    padding: 3px 7px; border-radius: 5px;
+    letter-spacing: 0.05em;
+    border: 1px solid transparent;
+    background: var(--op-polar-glow);
+    color: var(--op-polar);
+    border-color: var(--op-polar-line);
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+  }
+  .phase-of {
+    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-faint);
+    letter-spacing: 0.05em;
+  }
+  .phase-name {
+    flex: 1; font-size: 13px; font-weight: 600; letter-spacing: -0.01em;
+    text-align: right; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .phase-segments {
+    display: flex; gap: 5px; align-items: center; margin-bottom: 9px;
+  }
+  .phase-seg {
+    flex: 1; height: 4px; border-radius: 2px;
+    background: var(--phase-pending);
+    transition: background 0.35s, box-shadow 0.35s;
+    position: relative;
+  }
+  .phase-seg.done { background: var(--phase-done); }
+  .phase-seg.current {
+    background: var(--current-op-color, var(--op-polar));
+    box-shadow: 0 0 12px var(--current-op-glow, var(--op-polar-glow));
+  }
+
+  .step-sub {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; font-size: 10.5px;
+  }
+  .step-count {
+    font-family: 'DM Mono', monospace; color: var(--text-faint);
+    letter-spacing: 0.04em; flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-count b { color: var(--text-dim); font-weight: 500; }
+  .section-cur {
+    font-family: 'DM Mono', monospace; color: var(--text-dim);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+    text-align: right;
+  }
+  .section-cur .bullet {
+    display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--current-op-color, var(--op-polar));
+    margin-right: 5px; vertical-align: middle;
+    animation: pulse 2s ease-in-out infinite;
+    transition: background 0.3s;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* ============================
+     PAGE HEADER
+     ============================ */
+  .page-header {
+    padding: 22px 20px 12px;
+  }
+  .page-header .eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--op-polar); margin-bottom: 8px;
+  }
+  .page-header h1 {
+    font-size: 26px; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 6px;
+    line-height: 1.1; color: var(--text);
+  }
+  .page-header .sub {
+    font-size: 13px; color: var(--text-dim); line-height: 1.45;
+  }
+
+  /* ============================
+     CONTENT
+     ============================ */
+  .content { padding: 0 14px; }
+
+  /* Phase divider */
+  .phase-divider {
+    display: flex; align-items: center; gap: 10px;
+    padding: 26px 2px 14px;
+    scroll-margin-top: 160px;
+  }
+  .phase-divider .num {
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600;
+    color: var(--op-polar); letter-spacing: 0.06em;
+    padding: 4px 8px;
+    background: var(--op-polar-glow);
+    border-radius: 6px;
+    border: 1px solid var(--op-polar-line);
+    flex-shrink: 0;
+  }
+  .phase-divider .name {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.01em; flex: 1; color: var(--text);
+  }
+  .phase-divider .line {
+    flex: 0 0 auto; width: 40px; height: 1px; background: var(--border);
+  }
+
+  /* ============================
+     STEP WRAPPER — the core primitive
+     Each step-wrapper has data-op="<operation-name>" which drives its color.
+     ============================ */
+  .step-wrapper {
+    position: relative;
+    margin-bottom: 18px;
+    scroll-margin-top: 160px;
+    padding-left: 10px;
+  }
+
+  /* Outer left depth line — wraps BOTH header and body */
+  .step-wrapper::before {
+    content: '';
+    position: absolute;
+    left: 2px; top: 6px; bottom: 6px;
+    width: 2px; border-radius: 1px;
+    background: linear-gradient(180deg, var(--op-line, var(--op-neutral-line)), transparent 85%);
+  }
+  /* L1 gets NO left line (it's the main flow, doesn't need depth indication) */
+  .step-wrapper[data-depth="1"] { padding-left: 0; }
+  .step-wrapper[data-depth="1"]::before { display: none; }
+
+  /* Header (on main bg, outside body card) */
+  .step-wrapper-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 6px 10px 6px;
+    font-family: 'DM Mono', monospace;
+  }
+  .step-wrapper-header .left { display: flex; align-items: center; gap: 10px; }
+  .step-number-chip {
+    font-size: 11px; font-weight: 600;
+    min-width: 22px; height: 22px; padding: 0 6px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 6px;
+    background: var(--op-glow, var(--op-neutral-glow));
+    color: var(--op-color, var(--op-neutral));
+    border: 1px solid var(--op-line, var(--op-neutral-line));
+  }
+  .step-kind {
+    font-size: 11px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .step-of {
+    font-size: 11px; color: var(--text-faint); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  /* Nested wrappers: step-of color picks up the operation accent */
+  .step-wrapper[data-depth="2"] .step-of,
+  .step-wrapper[data-depth="3"] .step-of,
+  .step-wrapper[data-depth="4"] .step-of {
+    color: var(--op-color, var(--op-neutral));
+    opacity: 0.7;
+  }
+
+  /* Body card */
+  .step-body {
+    background: var(--bg-elev-1);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 16px 14px;
+    transition: background 0.25s, border-color 0.25s;
+  }
+
+  /* Body title */
+  .body-title {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+  .body-title .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--op-color, var(--op-neutral));
+  }
+  .body-title .accent { color: var(--op-color, var(--op-neutral)); }
+
+  /* ============================
+     PRIMITIVES
+     ============================ */
+
+  /* Formula with left accent line — inherits operation color */
+  .formula-accent {
+    padding: 12px 13px; margin: 10px 0;
+    border-left: 2px solid var(--op-color, var(--op-neutral));
+    font-family: 'DM Mono', monospace; font-size: 13px;
+    color: var(--text); line-height: 1.5;
+    overflow-x: auto; scrollbar-width: none;
+    white-space: nowrap;
+  }
+  .formula-accent::-webkit-scrollbar { display: none; }
+
+  /* Var chip */
+  .var-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px; height: 20px; padding: 0 6px;
+    border-radius: 5px;
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600;
+    vertical-align: middle;
+  }
+  .var-chip[data-op="polar"]       { background: var(--op-polar-glow); color: var(--op-polar); border: 1px solid var(--op-polar-line); }
+  .var-chip[data-op="squareroot"]  { background: var(--op-squareroot-glow); color: var(--op-squareroot); border: 1px solid var(--op-squareroot-line); }
+  .var-chip[data-op="eigendecomp"] { background: var(--op-eigendecomp-glow); color: var(--op-eigendecomp); border: 1px solid var(--op-eigendecomp-line); }
+  .var-chip[data-op="eigenvalues"] { background: var(--op-eigenvalues-glow); color: var(--op-eigenvalues); border: 1px solid var(--op-eigenvalues-line); }
+  .var-chip[data-op="eigenvectors"]{ background: var(--op-eigenvectors-glow); color: var(--op-eigenvectors); border: 1px solid var(--op-eigenvectors-line); }
+  .var-chip[data-op="determinant"] { background: var(--op-determinant-glow); color: var(--op-determinant); border: 1px solid var(--op-determinant-line); }
+  .var-chip[data-op="inverse"]     { background: var(--op-inverse-glow); color: var(--op-inverse); border: 1px solid var(--op-inverse-line); }
+  .var-chip[data-op="transpose"]   { background: var(--op-transpose-glow); color: var(--op-transpose); border: 1px solid var(--op-transpose-line); }
+  .var-chip[data-op="multiply"]    { background: var(--op-multiply-glow); color: var(--op-multiply); border: 1px solid var(--op-multiply-line); }
+  .var-chip.neutral { background: var(--bg-elev-3); color: var(--text); border: 1px solid var(--border); }
+
+  /* Big variable letter (used with matrix) */
+  .var-big {
+    font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; line-height: 1;
+  }
+  .var-big[data-op="polar"]       { color: var(--op-polar); }
+  .var-big[data-op="squareroot"]  { color: var(--op-squareroot); }
+  .var-big[data-op="eigendecomp"] { color: var(--op-eigendecomp); }
+  .var-big[data-op="eigenvalues"] { color: var(--op-eigenvalues); }
+  .var-big[data-op="eigenvectors"]{ color: var(--op-eigenvectors); }
+  .var-big[data-op="determinant"] { color: var(--op-determinant); }
+  .var-big[data-op="inverse"]     { color: var(--op-inverse); }
+  .var-big[data-op="transpose"]   { color: var(--op-transpose); }
+  .var-big[data-op="multiply"]    { color: var(--op-multiply); }
+
+  /* Matrix — brackets take operation color */
+  .matrix-line {
+    display: flex; align-items: center; gap: 12px; padding: 6px 0;
+    overflow-x: auto; scrollbar-width: none;
+    font-family: 'DM Mono', monospace;
+  }
+  .matrix-line::-webkit-scrollbar { display: none; }
+  .matrix-line .eq { color: var(--text-dim); font-size: 14px; }
+
+  .matrix {
+    display: grid; gap: 5px 12px;
+    padding: 10px 12px;
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    position: relative; flex-shrink: 0;
+    border-left: 2px solid; border-right: 2px solid;
+  }
+  .matrix-4 { grid-template-columns: repeat(4, auto); }
+  .matrix > * { text-align: center; min-width: 22px; color: var(--text); }
+  .matrix::before, .matrix::after, .matrix .tr, .matrix .br {
+    content: ''; position: absolute; width: 8px; height: 2px;
+  }
+  .matrix::before { top: 0; left: -2px; }
+  .matrix::after { bottom: 0; left: -2px; }
+  .matrix .tr { top: 0; right: -2px; }
+  .matrix .br { bottom: 0; right: -2px; }
+
+  .matrix[data-op="polar"]       { border-color: var(--op-polar); }
+  .matrix[data-op="polar"]::before, .matrix[data-op="polar"]::after, .matrix[data-op="polar"] .tr, .matrix[data-op="polar"] .br { background: var(--op-polar); }
+  .matrix[data-op="squareroot"]  { border-color: var(--op-squareroot); }
+  .matrix[data-op="squareroot"]::before, .matrix[data-op="squareroot"]::after, .matrix[data-op="squareroot"] .tr, .matrix[data-op="squareroot"] .br { background: var(--op-squareroot); }
+  .matrix[data-op="eigendecomp"] { border-color: var(--op-eigendecomp); }
+  .matrix[data-op="eigendecomp"]::before, .matrix[data-op="eigendecomp"]::after, .matrix[data-op="eigendecomp"] .tr, .matrix[data-op="eigendecomp"] .br { background: var(--op-eigendecomp); }
+  .matrix[data-op="eigenvalues"] { border-color: var(--op-eigenvalues); }
+  .matrix[data-op="eigenvalues"]::before, .matrix[data-op="eigenvalues"]::after, .matrix[data-op="eigenvalues"] .tr, .matrix[data-op="eigenvalues"] .br { background: var(--op-eigenvalues); }
+  .matrix[data-op="determinant"] { border-color: var(--op-determinant); }
+  .matrix[data-op="determinant"]::before, .matrix[data-op="determinant"]::after, .matrix[data-op="determinant"] .tr, .matrix[data-op="determinant"] .br { background: var(--op-determinant); }
+  .matrix[data-op="transpose"]   { border-color: var(--op-transpose); }
+  .matrix[data-op="transpose"]::before, .matrix[data-op="transpose"]::after, .matrix[data-op="transpose"] .tr, .matrix[data-op="transpose"] .br { background: var(--op-transpose); }
+
+  /* Prose */
+  .prose {
+    font-size: 13.5px; line-height: 1.6; color: var(--text);
+    padding: 8px 0;
+  }
+
+  /* "// where" */
+  .where-label {
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-faint);
+    letter-spacing: 0.06em; margin: 14px 0 8px;
+  }
+  .where-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg-elev-2); border: 1px solid var(--border-soft);
+    border-radius: 9px; margin-bottom: 6px;
+  }
+  .where-row .desc { font-size: 13px; color: var(--text); }
+
+  /* Method tabs — active color picks up operation */
+  .method-tabs {
+    display: flex; gap: 3px; padding: 3px;
+    background: var(--bg-elev-2); border: 1px solid var(--border-soft);
+    border-radius: 9px; margin: 10px 0 8px;
+  }
+  .method-tab {
+    flex: 1; padding: 7px 8px; border-radius: 6px;
+    font-size: 11px; font-weight: 500; text-align: center;
+    color: var(--text-dim); cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s, color 0.2s;
+  }
+  .method-tab.active {
+    background: var(--op-color, var(--op-neutral));
+    color: var(--bg); font-weight: 600;
+  }
+
+  /* Control row */
+  .control-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--bg-elev-2); border: 1px solid var(--border-soft);
+    border-radius: 9px; margin: 5px 0;
+  }
+  .control-row .label { font-size: 12.5px; color: var(--text-dim); }
+  .control-row .value {
+    font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 9px; background: var(--bg-elev-3); border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  /* Coef grid */
+  .coef-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: 10px 0; }
+  .coef-chip {
+    padding: 7px 4px; background: var(--bg-elev-2); border: 1px solid var(--border-soft);
+    border-radius: 7px; text-align: center;
+  }
+  .coef-chip .k { font-family: 'DM Mono', monospace; font-size: 9.5px; color: var(--text-faint); }
+  .coef-chip .v { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--op-color, var(--op-polar)); font-weight: 500; margin-top: 1px; }
+
+  /* Result callout — stays in success/green regardless of operation */
+  .result-callout {
+    padding: 12px 14px; margin: 10px 0;
+    background: var(--success-glow);
+    border: 1px solid var(--success);
+    border-radius: 10px;
+  }
+  .result-callout .caption {
+    font-family: 'DM Mono', monospace; font-size: 9.5px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--success); margin-bottom: 6px;
+  }
+  .result-callout .value {
+    font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.5;
+    word-break: break-word; color: var(--text);
+  }
+
+  /* ============================
+     FLOATING NEXT BUTTON
+     ============================ */
+  .next-button {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    z-index: 60; width: 390px; pointer-events: none;
+    display: flex; justify-content: flex-end; padding: 0 20px;
+  }
+  .next-btn {
+    pointer-events: auto;
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px 12px 18px;
+    background: var(--current-op-color, var(--op-polar)); color: var(--bg);
+    border: none; border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 30px var(--current-op-glow, var(--op-polar-glow)),
+                0 0 0 1px var(--current-op-line, var(--op-polar-line));
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span>13:26</span>
+  <span class="right">
+    <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="4" y="6" width="3" height="6" rx="0.5"/><rect x="8" y="3" width="3" height="9" rx="0.5"/><rect x="12" y="0" width="3" height="12" rx="0.5"/></svg>
+    <svg width="15" height="12" viewBox="0 0 15 12" fill="currentColor"><path d="M7.5 2.5 A 6 6 0 0 1 13.5 8.5 L 12 8.5 A 4.5 4.5 0 0 0 7.5 4 Z M7.5 5.5 A 3 3 0 0 1 10.5 8.5 L 9 8.5 A 1.5 1.5 0 0 0 7.5 7 Z"/><circle cx="7.5" cy="8.5" r="1"/></svg>
+    <svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="0.5" y="1" width="20" height="10" rx="2"/><rect x="2" y="2.5" width="17" height="7" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+  </span>
+</div>
+
+<nav class="top-nav">
+  <button class="icon-btn">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div class="title">Matrix <span class="dot">·</span> Polar decomposition</div>
+  <div class="nav-right">
+    <button class="icon-btn" id="theme-toggle" title="Toggle theme">
+      <!-- Icon swapped in JS based on theme -->
+      <svg id="theme-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <button class="icon-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- Progress -->
+<div class="progress-shell">
+  <div class="phase-row">
+    <span class="phase-meta">
+      <span class="phase-chip" id="phase-chip">02</span>
+      <span class="phase-of">/ 5</span>
+    </span>
+    <span class="phase-name" id="phase-name">Eigendecomposition</span>
+  </div>
+  <div class="phase-segments">
+    <div class="phase-seg" data-phase="1"></div>
+    <div class="phase-seg" data-phase="2"></div>
+    <div class="phase-seg" data-phase="3"></div>
+    <div class="phase-seg" data-phase="4"></div>
+    <div class="phase-seg" data-phase="5"></div>
+  </div>
+  <div class="step-sub">
+    <span class="step-count">step <b id="step-num">5</b>/14</span>
+    <span class="section-cur">
+      <span class="bullet"></span><span id="section-cur">Determinant of A − λI</span>
+    </span>
+  </div>
+</div>
+
+<div class="page-header">
+  <div class="eyebrow">Decomposition · A = QH</div>
+  <h1>Polar decomposition</h1>
+  <div class="sub">Each step is a Step Wrapper. Each operation has its own identity color — you can tell what's running just by glancing.</div>
+</div>
+
+<div class="content">
+
+  <!-- ======== PHASE 1 : Compute AᵀA ======== -->
+  <div class="phase-divider" data-phase="1" data-phase-name="Compute AᵀA">
+    <span class="num">01</span>
+    <span class="name">Compute AᵀA</span>
+    <span class="line"></span>
+  </div>
+
+  <!-- Step 1: Transpose (L1, op=transpose → sky color) -->
+  <div class="step-wrapper" data-depth="1" data-step="1" data-op="transpose" data-title="Transpose A" data-phase="1"
+       style="--op-color: var(--op-transpose); --op-glow: var(--op-transpose-glow); --op-line: var(--op-transpose-line);">
+    <div class="step-wrapper-header">
+      <div class="left">
+        <span class="step-number-chip">1</span>
+        <span class="step-kind">transpose</span>
+      </div>
+      <span class="step-of">step 1 of 14</span>
+    </div>
+    <div class="step-body">
+      <div class="body-title">
+        <span class="dot"></span>
+        <span class="accent">matrix Aᵀ</span>
+      </div>
+      <div class="prose">Take <span class="var-chip" data-op="transpose">A</span>ᵀ by flipping A across its main diagonal.</div>
+      <div class="matrix-line">
+        <span class="var-big" data-op="transpose">Aᵀ</span>
+        <span class="eq">=</span>
+        <div class="matrix matrix-4" data-op="transpose">
+          <span class="tr"></span><span class="br"></span>
+          <span>23</span><span>8</span><span>13</span><span>9</span>
+          <span>30</span><span>11</span><span>13</span><span>12</span>
+          <span>11</span><span>7</span><span>4</span><span>8</span>
+          <span>13</span><span>4</span><span>15</span><span>7</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Multiply (op=multiply → yellow) -->
+  <div class="step-wrapper" data-depth="1" data-step="2" data-op="multiply" data-title="Multiply AᵀA" data-phase="1"
+       style="--op-color: var(--op-multiply); --op-glow: var(--op-multiply-glow); --op-line: var(--op-multiply-line);">
+    <div class="step-wrapper-header">
+      <div class="left">
+        <span class="step-number-chip">2</span>
+        <span class="step-kind">multiply</span>
+      </div>
+      <span class="step-of">step 2 of 14</span>
+    </div>
+    <div class="step-body">
+      <div class="body-title">
+        <span class="dot"></span>
+        <span class="accent">matrix H' = AᵀA</span>
+      </div>
+      <div class="prose">Multiply <span class="var-chip" data-op="transpose">Aᵀ</span> by <span class="var-chip" data-op="polar">A</span>. Result is symmetric positive-definite.</div>
+      <div class="result-callout">
+        <div class="caption">result · H'</div>
+        <div class="value">H' = symmetric 4×4 matrix</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== PHASE 2 : Eigendecomposition ======== -->
+  <div class="phase-divider" data-phase="2" data-phase-name="Eigendecomposition">
+    <span class="num">02</span>
+    <span class="name">Eigendecomposition</span>
+    <span class="line"></span>
+  </div>
+
+  <!-- Step 3: Eigendecomp wrapper (L1, op=eigendecomp → cyan). Contains nested L2 eigenvalues/eigenvectors -->
+  <div class="step-wrapper" data-depth="1" data-step="3" data-op="eigendecomp" data-title="Eigendecomposition H = PDP⁻¹" data-phase="2"
+       style="--op-color: var(--op-eigendecomp); --op-glow: var(--op-eigendecomp-glow); --op-line: var(--op-eigendecomp-line);">
+    <div class="step-wrapper-header">
+      <div class="left">
+        <span class="step-number-chip">3</span>
+        <span class="step-kind">eigendecomp</span>
+      </div>
+      <span class="step-of">step 3 of 14</span>
+    </div>
+    <div class="step-body">
+      <div class="body-title">
+        <span class="dot"></span>
+        <span class="accent">H = P · D · P⁻¹</span>
+      </div>
+      <div class="prose">Decompose <span class="var-chip" data-op="eigendecomp">H</span> into <span class="var-chip" data-op="eigenvectors">P</span> (eigenvectors) · <span class="var-chip" data-op="eigenvalues">D</span> (diagonal eigenvalues) · <span class="var-chip" data-op="inverse">P⁻¹</span>.</div>
+      <div class="formula-accent">H = P · D · P⁻¹</div>
+
+      <!-- L2 nested: Eigenvalues (own op=eigenvalues → teal) -->
+      <div class="step-wrapper" data-depth="2" data-step="3.1" data-op="eigenvalues" data-title="Eigenvalues" data-phase="2"
+           style="--op-color: var(--op-eigenvalues); --op-glow: var(--op-eigenvalues-glow); --op-line: var(--op-eigenvalues-line);">
+        <div class="step-wrapper-header">
+          <div class="left">
+            <span class="step-number-chip">3.1</span>
+            <span class="step-kind">eigenvalues</span>
+          </div>
+          <span class="step-of">sub 1 of 2</span>
+        </div>
+        <div class="step-body">
+          <div class="body-title">
+            <span class="dot"></span>
+            <span class="accent">solve det(A−λI) = 0</span>
+          </div>
+          <div class="prose">Form <span class="var-chip" data-op="polar">A</span> − <span class="var-chip" data-op="eigenvalues">λ</span>I, compute determinant, solve characteristic equation.</div>
+
+          <div class="matrix-line">
+            <span class="var-big" data-op="eigenvalues">A−λI</span>
+            <span class="eq">=</span>
+            <div class="matrix matrix-4" data-op="eigenvalues">
+              <span class="tr"></span><span class="br"></span>
+              <span>23−λ</span><span>30</span><span>11</span><span>13</span>
+              <span>8</span><span>11−λ</span><span>7</span><span>4</span>
+              <span>13</span><span>13</span><span>4−λ</span><span>15</span>
+              <span>9</span><span>12</span><span>8</span><span>7−λ</span>
+            </div>
+          </div>
+
+          <!-- L3 nested: Determinant (own op=determinant → orange) -->
+          <div class="step-wrapper" data-depth="3" data-step="3.1.1" data-op="determinant" data-title="Determinant of A − λI" data-phase="2"
+               style="--op-color: var(--op-determinant); --op-glow: var(--op-determinant-glow); --op-line: var(--op-determinant-line);">
+            <div class="step-wrapper-header">
+              <div class="left">
+                <span class="step-number-chip">3.1.1</span>
+                <span class="step-kind">determinant</span>
+              </div>
+              <span class="step-of">sub 1 of 1</span>
+            </div>
+            <div class="step-body">
+              <div class="body-title">
+                <span class="dot"></span>
+                <span class="accent">det(A − λI)</span>
+              </div>
+              <div class="prose">Choose method — only this sub-tree recomputes.</div>
+
+              <div class="method-tabs">
+                <div class="method-tab active">Decomposition</div>
+                <div class="method-tab">Cofactor</div>
+                <div class="method-tab">Gauss</div>
+              </div>
+
+              <div class="control-row">
+                <span class="label">Decomposition by</span>
+                <span class="value">Row
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </span>
+              </div>
+              <div class="control-row">
+                <span class="label">Row number</span>
+                <span class="value">1
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </span>
+              </div>
+
+              <div class="formula-accent">det(A − λI) = λ⁴ − 81λ³ + 1205λ² − 6010λ + 8464</div>
+            </div>
+          </div>
+
+          <div class="prose">Equate to zero — quartic characteristic equation:</div>
+          <div class="formula-accent">λ⁴ − 81λ³ + 1205λ² − 6010λ + 8464 = 0</div>
+          <div class="coef-list">
+            <div class="coef-chip"><div class="k">a</div><div class="v">1</div></div>
+            <div class="coef-chip"><div class="k">b</div><div class="v">−81</div></div>
+            <div class="coef-chip"><div class="k">c</div><div class="v">1205</div></div>
+            <div class="coef-chip"><div class="k">d</div><div class="v">−6010</div></div>
+            <div class="coef-chip"><div class="k">e</div><div class="v">8464</div></div>
+          </div>
+
+          <div class="result-callout">
+            <div class="caption">λ roots</div>
+            <div class="value">λ₁ = 52.82 &nbsp; λ₂ = 18.47<br>λ₃ = 6.31 &nbsp;&nbsp; λ₄ = 3.40</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- L2 nested: Eigenvectors (own op=eigenvectors → mint) -->
+      <div class="step-wrapper" data-depth="2" data-step="3.2" data-op="eigenvectors" data-title="Eigenvectors" data-phase="2"
+           style="--op-color: var(--op-eigenvectors); --op-glow: var(--op-eigenvectors-glow); --op-line: var(--op-eigenvectors-line);">
+        <div class="step-wrapper-header">
+          <div class="left">
+            <span class="step-number-chip">3.2</span>
+            <span class="step-kind">eigenvectors</span>
+          </div>
+          <span class="step-of">sub 2 of 2</span>
+        </div>
+        <div class="step-body">
+          <div class="body-title">
+            <span class="dot"></span>
+            <span class="accent">v₁, v₂, v₃, v₄</span>
+          </div>
+          <div class="prose">Solve <span class="var-chip" data-op="eigenvectors">(A − λᵢI)v = 0</span> for each eigenvalue.</div>
+          <div class="formula-accent">v₁ = [1.729, 1.795, 0.375, 1.000]<br>v₂ = [0.313, −0.658, −0.747, 1.000]</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======== PHASE 3 : Square root H ======== -->
+  <div class="phase-divider" data-phase="3" data-phase-name="Square root H">
+    <span class="num">03</span>
+    <span class="name">Square root H</span>
+    <span class="line"></span>
+  </div>
+
+  <!-- Step 4: Square root wrapper (op=squareroot → fuchsia) -->
+  <div class="step-wrapper" data-depth="1" data-step="4" data-op="squareroot" data-title="Square root of H" data-phase="3"
+       style="--op-color: var(--op-squareroot); --op-glow: var(--op-squareroot-glow); --op-line: var(--op-squareroot-line);">
+    <div class="step-wrapper-header">
+      <div class="left">
+        <span class="step-number-chip">4</span>
+        <span class="step-kind">square root</span>
+      </div>
+      <span class="step-of">step 4 of 14</span>
+    </div>
+    <div class="step-body">
+      <div class="body-title">
+        <span class="dot"></span>
+        <span class="accent">S = P · √D · P⁻¹</span>
+      </div>
+      <div class="prose">Using already-computed <span class="var-chip" data-op="eigenvectors">P</span> and <span class="var-chip" data-op="eigenvalues">D</span>.</div>
+
+      <div class="matrix-line">
+        <span class="var-big" data-op="squareroot">√D</span>
+        <span class="eq">=</span>
+        <div class="matrix" data-op="squareroot" style="grid-template-columns: repeat(4, auto);">
+          <span class="tr"></span><span class="br"></span>
+          <span>7.27</span><span>0</span><span>0</span><span>0</span>
+          <span>0</span><span>4.30</span><span>0</span><span>0</span>
+          <span>0</span><span>0</span><span>2.51</span><span>0</span>
+          <span>0</span><span>0</span><span>0</span><span>1.84</span>
+        </div>
+      </div>
+
+      <div class="result-callout">
+        <div class="caption">result · H (symm pos-def)</div>
+        <div class="value">H = [[4.12, 0.61, …], [0.61, 3.89, …], …]</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== PHASE 4 : Compute Q ======== -->
+  <div class="phase-divider" data-phase="4" data-phase-name="Compute Q">
+    <span class="num">04</span>
+    <span class="name">Compute orthogonal Q</span>
+    <span class="line"></span>
+  </div>
+
+  <!-- Step 5: Inverse wrapper (op=inverse → rose) -->
+  <div class="step-wrapper" data-depth="1" data-step="5" data-op="inverse" data-title="Invert H" data-phase="4"
+       style="--op-color: var(--op-inverse); --op-glow: var(--op-inverse-glow); --op-line: var(--op-inverse-line);">
+    <div class="step-wrapper-header">
+      <div class="left">
+        <span class="step-number-chip">5</span>
+        <span class="step-kind">inverse</span>
+      </div>
+      <span class="step-of">step 5 of 14</span>
+    </div>
+    <div class="step-body">
+      <div class="body-title">
+        <span class="dot"></span>
+        <span class="accent">H⁻¹</span>
+      </div>
+      <div class="prose">Compute inverse of <span class="var-chip" data-op="squareroot">H</span>.</div>
+      <div class="formula-accent">H⁻¹ = adj(H) / det(H)</div>
+    </div>
+  </div>
+
+  <!-- Step 6: Multiply Q = A·H⁻¹ (op=multiply) -->
+  <div class="step-wrapper" data-depth="1" data-step="6" data-op="multiply" data-title="Multiply Q = A·H⁻¹" data-phase="4"
+       style="--op-color: var(--op-multiply); --op-glow: var(--op-multiply-glow); --op-line: var(--op-multiply-line);">
+    <div class="step-wrapper-header">
+      <div class="left">
+        <span class="step-number-chip">6</span>
+        <span class="step-kind">multiply</span>
+      </div>
+      <span class="step-of">step 6 of 14</span>
+    </div>
+    <div class="step-body">
+      <div class="body-title">
+        <span class="dot"></span>
+        <span class="accent">Q = A · H⁻¹</span>
+      </div>
+      <div class="prose">Multiply <span class="var-chip" data-op="polar">A</span> by <span class="var-chip" data-op="inverse">H⁻¹</span> to get orthogonal <span class="var-chip" data-op="polar">Q</span>.</div>
+      <div class="result-callout">
+        <div class="caption">result · Q orthogonal</div>
+        <div class="value">Q = [[0.71, 0.42, …], […], …]</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== PHASE 5 : Verify ======== -->
+  <div class="phase-divider" data-phase="5" data-phase-name="Verify A = QH">
+    <span class="num">05</span>
+    <span class="name">Verify A = QH</span>
+    <span class="line"></span>
+  </div>
+
+  <div class="step-wrapper" data-depth="1" data-step="7" data-op="polar" data-title="Compare Q·H with A" data-phase="5"
+       style="--op-color: var(--op-polar); --op-glow: var(--op-polar-glow); --op-line: var(--op-polar-line);">
+    <div class="step-wrapper-header">
+      <div class="left">
+        <span class="step-number-chip">7</span>
+        <span class="step-kind">verify</span>
+      </div>
+      <span class="step-of">step 7 of 14</span>
+    </div>
+    <div class="step-body">
+      <div class="body-title">
+        <span class="dot"></span>
+        <span class="accent">residual check</span>
+      </div>
+      <div class="result-callout">
+        <div class="caption">✓ decomposition complete</div>
+        <div class="value">Q · H = A &nbsp; (residual &lt; 1e−10)</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="next-button">
+  <button class="next-btn" id="next-btn">
+    Next step
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  </button>
+</div>
+
+<script>
+  // ============================
+  // THEME TOGGLE
+  // ============================
+  const root = document.documentElement;
+  root.setAttribute('data-theme', 'dark');
+  const themeBtn = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+
+  const SUN_ICON = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  const MOON_ICON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+
+  function setTheme(t) {
+    root.setAttribute('data-theme', t);
+    themeIcon.innerHTML = t === 'dark' ? MOON_ICON : SUN_ICON;
+  }
+  setTheme('dark');
+
+  themeBtn.addEventListener('click', () => {
+    const current = root.getAttribute('data-theme');
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  // ============================
+  // PROGRESS TRACKING
+  // ============================
+  const phaseEls = [...document.querySelectorAll('.phase-divider')];
+  const stepEls = [...document.querySelectorAll('.step-wrapper[data-step]')];
+  const phaseSegs = [...document.querySelectorAll('.phase-seg')];
+  const phaseChip = document.getElementById('phase-chip');
+  const phaseName = document.getElementById('phase-name');
+  const stepNum = document.getElementById('step-num');
+  const sectionCur = document.getElementById('section-cur');
+  const nextBtn = document.getElementById('next-btn');
+  const progressShell = document.querySelector('.progress-shell');
+
+  function getOpColors(opName) {
+    if (!opName) return { color: 'var(--op-polar)', glow: 'var(--op-polar-glow)', line: 'var(--op-polar-line)' };
+    return {
+      color: `var(--op-${opName})`,
+      glow: `var(--op-${opName}-glow)`,
+      line: `var(--op-${opName}-line)`,
+    };
+  }
+
+  function updateProgress(phase, phaseName_, opName, stepNumber, stepTitle) {
+    const { color, glow, line } = getOpColors(opName);
+
+    // Set globals used by segment + next button
+    progressShell.style.setProperty('--current-op-color', color);
+    progressShell.style.setProperty('--current-op-glow', glow);
+    progressShell.style.setProperty('--current-op-line', line);
+    nextBtn.style.setProperty('--current-op-color', color);
+    nextBtn.style.setProperty('--current-op-glow', glow);
+    nextBtn.style.setProperty('--current-op-line', line);
+
+    // Phase chip color follows operation
+    phaseChip.style.background = glow;
+    phaseChip.style.color = color;
+    phaseChip.style.borderColor = line;
+    phaseChip.textContent = String(phase).padStart(2, '0');
+
+    // Phase name
+    phaseName.textContent = phaseName_;
+
+    // Segments
+    phaseSegs.forEach((seg, i) => {
+      seg.classList.remove('done', 'current');
+      if (i + 1 < phase) seg.classList.add('done');
+      if (i + 1 === phase) seg.classList.add('current');
+    });
+
+    // Step counter + section
+    if (stepNumber) stepNum.textContent = stepNumber;
+    if (stepTitle) sectionCur.textContent = stepTitle;
+  }
+
+  function findCurrent() {
+    const anchor = 180;
+    let latestStep = null;
+    for (const el of stepEls) {
+      const r = el.getBoundingClientRect();
+      if (r.top <= anchor) latestStep = el;
+    }
+    let latestPhase = null;
+    for (const el of phaseEls) {
+      const r = el.getBoundingClientRect();
+      if (r.top <= anchor) latestPhase = el;
+    }
+
+    const phase = latestPhase ? parseInt(latestPhase.dataset.phase, 10) : 1;
+    const phaseName_ = latestPhase ? latestPhase.dataset.phaseName : phaseEls[0].dataset.phaseName;
+
+    if (latestStep) {
+      updateProgress(phase, phaseName_, latestStep.dataset.op, latestStep.dataset.step, latestStep.dataset.title);
+    } else {
+      updateProgress(phase, phaseName_, stepEls[0].dataset.op, '1', stepEls[0].dataset.title);
+    }
+  }
+
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        findCurrent();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    const anchor = 180;
+    for (const el of stepEls) {
+      const r = el.getBoundingClientRect();
+      if (r.top > anchor + 10) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+    }
+  });
+
+  findCurrent();
+</script>
+
+</body>
+</html>

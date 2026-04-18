@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Matrix Ops — Palette Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="dark"] {
+    --bg: #0a0a0f;
+    --bg-elev-1: #13131a;
+    --bg-elev-2: #1a1a24;
+    --text: #ececf1;
+    --text-dim: #9a9aae;
+    --text-faint: #5c5c70;
+    --border: #2a2a38;
+    --border-soft: #1f1f2a;
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f4f0;
+    --bg-elev-1: #ffffff;
+    --bg-elev-2: #faf9f5;
+    --text: #1a1a22;
+    --text-dim: #5c5c6e;
+    --text-faint: #9a9aa8;
+    --border: #d9d7cf;
+    --border-soft: #e8e6de;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 20px; font-family: 'DM Sans', sans-serif;
+    background: var(--bg); color: var(--text);
+    transition: background 0.25s, color 0.25s;
+  }
+  .header {
+    max-width: 1200px; margin: 0 auto 40px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+  }
+  h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 4px; }
+  .subtitle { color: var(--text-dim); font-size: 14px; }
+  .theme-switch {
+    display: flex; gap: 4px; padding: 4px; background: var(--bg-elev-2);
+    border: 1px solid var(--border-soft); border-radius: 10px;
+  }
+  .theme-switch button {
+    padding: 8px 14px; border: none; background: transparent; color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; border-radius: 7px;
+  }
+  .theme-switch button.active {
+    background: var(--bg-elev-1); color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .section {
+    margin-bottom: 48px;
+  }
+  .section-title {
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text-faint); margin-bottom: 14px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border-soft);
+  }
+
+  .grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .swatch {
+    background: var(--bg-elev-1); border: 1px solid var(--border-soft);
+    border-radius: 12px; padding: 14px; position: relative;
+    overflow: hidden;
+  }
+  .swatch-name {
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+  }
+  .swatch-name .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .swatch-bar {
+    display: flex; gap: 4px; margin-bottom: 10px; height: 38px;
+  }
+  .swatch-bar > div {
+    flex: 1; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .swatch-meta {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--text-faint); line-height: 1.5;
+  }
+  .swatch-meta .val { color: var(--text-dim); }
+
+  /* Example step wrapper preview */
+  .example {
+    margin-top: 10px;
+    padding: 10px; border-radius: 9px;
+    background: var(--bg-elev-2); border: 1px solid var(--border-soft);
+  }
+  .example-label {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    color: var(--text-faint); letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .example-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px; height: 20px; padding: 0 6px;
+    border-radius: 5px;
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600;
+    margin-right: 6px;
+  }
+  .example-text {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+  }
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="header">
+  <div>
+    <h1>Matrix Operations — Palette</h1>
+    <div class="subtitle">Complete color system. Toggle theme to verify both modes.</div>
+  </div>
+  <div class="theme-switch">
+    <button data-theme="dark" class="active">Dark</button>
+    <button data-theme="light">Light</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- UI -->
+  <section class="section">
+    <div class="section-title">UI · neutral semantic</div>
+    <div class="grid" id="ui-grid"></div>
+  </section>
+
+  <!-- Operations -->
+  <section class="section">
+    <div class="section-title">Operations · per-operation accent</div>
+    <div class="grid" id="ops-grid"></div>
+  </section>
+
+  <!-- Depth -->
+  <section class="section">
+    <div class="section-title">Depth · generic fallback tiers</div>
+    <div class="grid" id="depth-grid"></div>
+  </section>
+
+  <!-- Progress -->
+  <section class="section">
+    <div class="section-title">Progress · bar states</div>
+    <div class="grid" id="progress-grid"></div>
+  </section>
+
+</div>
+
+<script type="module">
+// Inline the palette (same content as palette.js)
+const colors = {
+  ui: {
+    bg: { dark: '#0a0a0f', light: '#f5f4f0' },
+    bgElev1: { dark: '#13131a', light: '#ffffff' },
+    bgElev2: { dark: '#1a1a24', light: '#faf9f5' },
+    bgElev3: { dark: '#222230', light: '#edece7' },
+    text: { dark: '#ececf1', light: '#1a1a22' },
+    textDim: { dark: '#9a9aae', light: '#5c5c6e' },
+    textFaint: { dark: '#5c5c70', light: '#9a9aa8' },
+    border: { dark: '#2a2a38', light: '#d9d7cf' },
+    borderSoft: { dark: '#1f1f2a', light: '#e8e6de' },
+    brand: { dark: '#8b8bff', light: '#5c5cd6' },
+    success: { dark: '#6ee7b7', light: '#0fb87a' },
+    warn: { dark: '#ffb86e', light: '#c2410c' },
+    error: { dark: '#fb7185', light: '#e11d48' },
+  },
+  operations: {
+    addition:             { dark: { base: '#67e8f9' }, light: { base: '#0e7490' } },
+    subtraction:          { dark: { base: '#22d3ee' }, light: { base: '#0891b2' } },
+    multiplication:       { dark: { base: '#fde047' }, light: { base: '#a16207' } },
+    power:                { dark: { base: '#fbbf24' }, light: { base: '#b45309' } },
+    transpose:            { dark: { base: '#7dd3fc' }, light: { base: '#0284c7' } },
+    determinant:          { dark: { base: '#ffb86e' }, light: { base: '#c2410c' } },
+    inverse:              { dark: { base: '#fb7185' }, light: { base: '#e11d48' } },
+    rank:                 { dark: { base: '#d8b4fe' }, light: { base: '#7e22ce' } },
+    trace:                { dark: { base: '#f9a8d4' }, light: { base: '#be185d' } },
+    norm:                 { dark: { base: '#fcd34d' }, light: { base: '#a16207' } },
+    luDecomposition:      { dark: { base: '#a3e635' }, light: { base: '#65a30d' } },
+    qrDecomposition:      { dark: { base: '#34d399' }, light: { base: '#059669' } },
+    qrDecompositionStage1:{ dark: { base: '#6ee7b7' }, light: { base: '#047857' } },
+    qrDecompositionStage2:{ dark: { base: '#86efac' }, light: { base: '#15803d' } },
+    polarDecomposition:   { dark: { base: '#8b8bff' }, light: { base: '#5c5cd6' } },
+    cholesky:             { dark: { base: '#fbbf24' }, light: { base: '#d97706' } },
+    squareRoot:           { dark: { base: '#f0abfc' }, light: { base: '#c026d3' } },
+    eigendecomposition:   { dark: { base: '#22d3ee' }, light: { base: '#0891b2' } },
+    eigenvalues:          { dark: { base: '#6ee7b7' }, light: { base: '#0fb87a' } },
+    eigenvectors:         { dark: { base: '#a7f3d0' }, light: { base: '#10b981' } },
+    gauss:                { dark: { base: '#c4b5fd' }, light: { base: '#6d28d9' } },
+    gaussJordan:          { dark: { base: '#a78bfa' }, light: { base: '#7c3aed' } },
+    montante:             { dark: { base: '#f472b6' }, light: { base: '#be185d' } },
+    systemEquations:      { dark: { base: '#c4b5fd' }, light: { base: '#7c3aed' } },
+  },
+  depth: {
+    level1: { dark: { base: '#9a9aae' }, light: { base: '#5c5c6e' } },
+    level2: { dark: { base: '#b4b4c4' }, light: { base: '#6c6c7e' } },
+    level3: { dark: { base: '#c8c8d6' }, light: { base: '#7c7c8e' } },
+  },
+  progress: {
+    done:    { dark: '#3a3a50', light: '#c9c7bf' },
+    pending: { dark: '#222230', light: '#e8e6de' },
+  },
+};
+
+function hexToRgba(hex, alpha) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function render() {
+  const theme = document.body.getAttribute('data-theme');
+
+  // UI
+  const ui = document.getElementById('ui-grid');
+  ui.innerHTML = '';
+  Object.entries(colors.ui).forEach(([name, val]) => {
+    const color = val[theme];
+    const div = document.createElement('div');
+    div.className = 'swatch';
+    div.innerHTML = `
+      <div class="swatch-name">
+        <span class="dot" style="background: ${color}"></span>
+        ${name}
+      </div>
+      <div class="swatch-bar">
+        <div style="background: ${color}"></div>
+      </div>
+      <div class="swatch-meta">
+        <span>base</span> <span class="val">${color}</span>
+      </div>
+    `;
+    ui.appendChild(div);
+  });
+
+  // Operations
+  const ops = document.getElementById('ops-grid');
+  ops.innerHTML = '';
+  Object.entries(colors.operations).forEach(([name, val]) => {
+    const base = val[theme].base;
+    const glow = hexToRgba(base, theme === 'dark' ? 0.14 : 0.08);
+    const line = hexToRgba(base, theme === 'dark' ? 0.4 : 0.38);
+    const mute = hexToRgba(base, theme === 'dark' ? 0.06 : 0.04);
+
+    const div = document.createElement('div');
+    div.className = 'swatch';
+    div.innerHTML = `
+      <div class="swatch-name">
+        <span class="dot" style="background: ${base}"></span>
+        ${name}
+      </div>
+      <div class="swatch-bar">
+        <div style="background: ${base}; color: ${theme === 'dark' ? '#0a0a0f' : '#fff'};">base</div>
+        <div style="background: ${glow}; color: ${base}; border: 1px solid ${line};">glow</div>
+      </div>
+      <div class="swatch-meta">
+        <div><span>base</span> <span class="val">${base}</span></div>
+      </div>
+      <div class="example">
+        <div class="example-label">Step wrapper preview</div>
+        <div style="border-left: 2px solid ${line}; padding-left: 8px;">
+          <span class="example-chip" style="background: ${glow}; color: ${base}; border: 1px solid ${line};">3</span>
+          <span class="example-text" style="color: ${base};">${name}</span>
+        </div>
+      </div>
+    `;
+    ops.appendChild(div);
+  });
+
+  // Depth
+  const depth = document.getElementById('depth-grid');
+  depth.innerHTML = '';
+  Object.entries(colors.depth).forEach(([name, val]) => {
+    const base = val[theme].base;
+    const glow = hexToRgba(base, theme === 'dark' ? 0.12 : 0.07);
+    const line = hexToRgba(base, theme === 'dark' ? 0.28 : 0.23);
+
+    const div = document.createElement('div');
+    div.className = 'swatch';
+    div.innerHTML = `
+      <div class="swatch-name">
+        <span class="dot" style="background: ${base}"></span>
+        ${name}
+      </div>
+      <div class="swatch-bar">
+        <div style="background: ${base}; color: ${theme === 'dark' ? '#0a0a0f' : '#fff'};">base</div>
+        <div style="background: ${glow}; color: ${base}; border: 1px solid ${line};">glow</div>
+      </div>
+      <div class="swatch-meta">
+        <div><span>base</span> <span class="val">${base}</span></div>
+      </div>
+    `;
+    depth.appendChild(div);
+  });
+
+  // Progress
+  const progress = document.getElementById('progress-grid');
+  progress.innerHTML = '';
+  Object.entries(colors.progress).forEach(([name, val]) => {
+    const color = val[theme];
+    const div = document.createElement('div');
+    div.className = 'swatch';
+    div.innerHTML = `
+      <div class="swatch-name">
+        <span class="dot" style="background: ${color}"></span>
+        ${name}
+      </div>
+      <div class="swatch-bar" style="height: 12px; align-items: center;">
+        <div style="background: ${color}; border-radius: 2px;"></div>
+      </div>
+      <div class="swatch-meta">
+        <span>value</span> <span class="val">${color}</span>
+      </div>
+    `;
+    progress.appendChild(div);
+  });
+}
+
+// Theme switch
+document.querySelectorAll('.theme-switch button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.theme-switch button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const theme = btn.dataset.theme;
+    document.body.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    render();
+  });
+});
+
+document.documentElement.setAttribute('data-theme', 'dark');
+render();
+</script>
+
+</body>
+</html>
