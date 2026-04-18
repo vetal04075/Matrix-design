@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matrix Addition · Fullscreen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-elev: #12121a;
+    --bg-elev-2: #191922;
+    --purple: #8b8bff;
+    --purple-soft: rgba(139, 139, 255, 0.12);
+    --purple-glow: rgba(139, 139, 255, 0.25);
+    --teal: #6ee7b7;
+    --teal-soft: rgba(110, 231, 183, 0.12);
+    --red: #ff7a7a;
+    --red-soft: rgba(255, 122, 122, 0.12);
+    --text: #ededf2;
+    --text-dim: #8a8a99;
+    --text-faint: #4a4a5a;
+    --border: #232330;
+    --border-soft: #1c1c28;
+    --solve-text: #0a0a0f;
+    --cell-empty: #4a4a5a;
+    --shadow-phone: 0 0 0 2px #000, 0 30px 80px rgba(139, 139, 255, 0.08), 0 10px 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .phone.light {
+    --bg: #f5f4f0;
+    --bg-elev: #ffffff;
+    --bg-elev-2: #f5f4f0;
+    --purple: #5c5cd6;
+    --purple-soft: rgba(92, 92, 214, 0.10);
+    --purple-glow: rgba(92, 92, 214, 0.25);
+    --teal: #0fb87a;
+    --teal-soft: rgba(15, 184, 122, 0.10);
+    --red: #e04a4a;
+    --red-soft: rgba(224, 74, 74, 0.08);
+    --text: #1a1a22;
+    --text-dim: #6a6a78;
+    --text-faint: #b8b8c2;
+    --border: #e6e5dd;
+    --border-soft: #ecebe4;
+    --solve-text: #ffffff;
+    --cell-empty: #c8c7bf;
+    --shadow-phone: 0 0 0 2px #000, 0 30px 80px rgba(92, 92, 214, 0.12), 0 10px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    min-height: 100%;
+    background: #0a0a0a;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    gap: 14px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .toggle {
+    display: inline-flex;
+    background: #1a1a22;
+    border: 1px solid #2a2a35;
+    border-radius: 999px;
+    padding: 4px;
+    gap: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .toggle button {
+    background: transparent; border: 0;
+    color: #8a8a99;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font: inherit; letter-spacing: inherit; text-transform: inherit;
+    transition: all 0.25s ease;
+  }
+  .toggle button.active { background: #8b8bff; color: #0a0a0f; }
+
+  .phone {
+    width: 100%;
+    max-width: 390px;
+    aspect-ratio: 390 / 844;
+    background: var(--bg);
+    border-radius: 48px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-phone);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: var(--text);
+    transition: background 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .island {
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 34px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 11;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 28px 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; color: var(--text-dim); }
+  .status-icons svg { width: 16px; height: 10px; }
+
+  /* Nav — SAME as main screen */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 14px;
+    gap: 12px;
+  }
+  .nav-btn {
+    width: 38px; height: 38px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .nav-btn:hover { border-color: var(--purple); background: var(--purple-soft); }
+  .nav-btn svg { width: 18px; height: 18px; }
+  .nav-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-title .sep { color: var(--text-faint); font-family: 'DM Mono', monospace; }
+  .nav-title .op { color: var(--purple); font-family: 'DM Mono', monospace; font-size: 18px; }
+
+  /* Expanded matrix area */
+  .fs-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 4px 6px 0;
+    gap: 8px;
+    min-height: 0;
+  }
+
+  /* Top toolbar — now focused on this matrix */
+  .fs-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .fs-tools-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .fs-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--purple);
+    padding: 4px 10px;
+    background: var(--purple-soft);
+    border-radius: 7px;
+    letter-spacing: 0.5px;
+  }
+  .fs-size-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 4px 8px;
+    background: var(--bg-elev-2);
+    border-radius: 6px;
+  }
+
+  .fs-zoom {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .zbtn {
+    width: 28px; height: 28px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+  .zbtn:hover { border-color: var(--purple); color: var(--purple); }
+  .zbtn:active { transform: scale(0.92); }
+  .zval {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--purple);
+    min-width: 42px;
+    text-align: center;
+    letter-spacing: 0.3px;
+  }
+
+  .fs-actions {
+    display: flex;
+    gap: 4px;
+  }
+  .fs-act {
+    width: 28px; height: 28px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .fs-act:hover { color: var(--text); border-color: var(--text-dim); }
+  .fs-act svg { width: 12px; height: 12px; }
+
+  /* Matrix container with soft purple frame */
+  .fs-matrix-container {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .fs-frame {
+    position: relative;
+    flex: 1;
+    padding: 20px;
+    border-radius: 16px;
+    background: var(--bg-elev);
+    border: 1px solid var(--purple);
+    box-shadow:
+      0 0 0 4px var(--purple-soft),
+      0 20px 40px -20px var(--purple-glow);
+    transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Corner brackets (subtle, as alternative visual cue) */
+  .fs-frame::before,
+  .fs-frame::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--purple);
+    opacity: 0.6;
+  }
+  .fs-frame::before {
+    top: -1px; left: -1px;
+    border-right: 0;
+    border-bottom: 0;
+    border-top-left-radius: 8px;
+  }
+  .fs-frame::after {
+    bottom: -1px; right: -1px;
+    border-left: 0;
+    border-top: 0;
+    border-bottom-right-radius: 8px;
+  }
+
+  /* Matrix grid inside frame — size depends on zoom */
+  .fs-grid {
+    grid-column: 2;
+    grid-row: 2;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .fs-grid .cell {
+    width: var(--cell-size, 58px);
+    height: var(--cell-size, 58px);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: calc(var(--cell-size, 58px) * 0.28);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+  }
+  .fs-grid .cell:empty::before {
+    content: '·';
+    color: var(--cell-empty);
+    opacity: 0.5;
+  }
+  .fs-grid .cell.filled { color: var(--text); }
+  .fs-grid .cell.active {
+    border-color: var(--purple);
+    background: var(--purple-soft);
+    color: var(--purple);
+  }
+  .fs-grid .cell.active::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 55%;
+    background: var(--purple);
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Row/col indicators — positioned around the centered grid */
+  .fs-grid-wrap {
+    position: relative;
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    gap: 8px;
+  }
+  .col-labels {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+  .col-labels > span {
+    width: var(--cell-size, 58px);
+    display: flex;
+    justify-content: center;
+  }
+  .row-labels {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+  .row-labels > span {
+    height: var(--cell-size, 58px);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 2px;
+  }
+
+  /* Solve */
+  .solve-area {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .solve-btn {
+    width: 100%;
+    height: 56px;
+    background: var(--purple);
+    color: var(--solve-text);
+    border: 0;
+    border-radius: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 30px rgba(139, 139, 255, 0.3);
+  }
+  .phone.light .solve-btn {
+    box-shadow: 0 10px 30px rgba(92, 92, 214, 0.35);
+  }
+  .solve-btn:hover { filter: brightness(1.08); }
+  .solve-btn:active { transform: translateY(1px); }
+  .solve-btn .eq { opacity: 0.6; font-weight: 400; }
+
+  .home-indicator {
+    position: absolute;
+    bottom: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 134px; height: 5px;
+    background: var(--text);
+    border-radius: 3px;
+    opacity: 0.9;
+    z-index: 30;
+  }
+
+  .controls-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #5a5a68;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+  <div class="controls-hint">fullscreen matrix · in-place expansion</div>
+  <div class="controls">
+    <div class="toggle" id="zoom-toggle">
+      <button data-zoom="0.75">75%</button>
+      <button data-zoom="1" class="active">100%</button>
+      <button data-zoom="1.25">125%</button>
+      <button data-zoom="1.5">150%</button>
+    </div>
+    <div class="toggle" id="theme-toggle">
+      <button data-theme="dark" class="active">Dark</button>
+      <button data-theme="light">Light</button>
+    </div>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="island"></div>
+
+    <div class="status-bar">
+      <span>00:34</span>
+      <div class="status-icons">
+        <span style="font-size:13px;letter-spacing:.5px;">•••</span>
+        <svg viewBox="0 0 16 10" fill="none"><path d="M14 1v8M11 3v6M8 5v4M5 6v3M2 7v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 22 10" fill="none">
+          <rect x="1" y="1" width="17" height="8" rx="2" stroke="currentColor" stroke-width="1"/>
+          <rect x="2.5" y="2.5" width="14" height="5" rx="1" fill="currentColor"/>
+          <rect x="19" y="3.5" width="1.5" height="3" rx="0.5" fill="currentColor"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- SAME nav as main screen — user knows where they are -->
+    <div class="nav">
+      <button class="nav-btn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="nav-title">
+        <span>Matrix</span><span class="sep">·</span><span class="op">+</span><span>Addition</span>
+      </div>
+      <button class="nav-btn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4M6 10l6-6 6 6M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Fullscreen matrix area -->
+    <div class="fs-wrap">
+      <!-- Toolbar: active matrix + zoom + collapse + copy/paste -->
+      <div class="fs-toolbar">
+        <div class="fs-tools-left">
+          <span class="fs-label">A</span>
+          <span class="fs-size-pill">4×4</span>
+        </div>
+
+        <div class="fs-zoom">
+          <button class="zbtn" id="zoomOut">−</button>
+          <span class="zval" id="zoomVal">100%</span>
+          <button class="zbtn" id="zoomIn">+</button>
+        </div>
+
+        <div class="fs-actions">
+          <button class="fs-act" title="Copy">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <button class="fs-act" title="Paste">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="12" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 3h6v3H9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="fs-act" title="Collapse">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 4H4v5M4 15v5h5M15 4h5v5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Matrix in soft purple frame -->
+      <div class="fs-matrix-container">
+        <div class="fs-frame" id="fsFrame">
+          <div class="fs-grid-wrap">
+            <!-- Column labels -->
+            <div class="col-labels" id="colLabels"></div>
+            <!-- Row labels -->
+            <div class="row-labels" id="rowLabels"></div>
+            <!-- Grid -->
+            <div class="fs-grid" id="fsGrid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solve (remains accessible) -->
+    <div class="solve-area">
+      <button class="solve-btn">
+        <span class="eq">=</span>
+        <span>solve</span>
+      </button>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+<script>
+  const sampleA = [
+    [4, 2, 1, 3],
+    [0, 1,-1, 2],
+    [3, 5, 2, 1],
+    [1, 0, 4, '']
+  ];
+
+  function fillGrid(id, data, activeR, activeC) {
+    const grid = document.getElementById(id);
+    if (!grid) return;
+    grid.innerHTML = '';
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        const v = data[r][c];
+        if (v !== '' && v !== null && v !== undefined) {
+          cell.textContent = v;
+          cell.classList.add('filled');
+        }
+        if (r === activeR && c === activeC) {
+          cell.classList.add('active');
+          cell.textContent = '';
+        }
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  function renderLabels() {
+    const cols = document.getElementById('colLabels');
+    const rows = document.getElementById('rowLabels');
+    cols.innerHTML = '';
+    rows.innerHTML = '';
+    for (let i = 1; i <= 4; i++) {
+      const c = document.createElement('span');
+      c.textContent = 'c' + i;
+      cols.appendChild(c);
+      const r = document.createElement('span');
+      r.textContent = 'r' + i;
+      rows.appendChild(r);
+    }
+  }
+
+  fillGrid('fsGrid', sampleA, 3, 3);
+  renderLabels();
+
+  // Zoom control
+  const phone = document.getElementById('phone');
+  const grid = document.getElementById('fsGrid');
+  const frame = document.getElementById('fsFrame');
+  const zoomVal = document.getElementById('zoomVal');
+  const zoomIn = document.getElementById('zoomIn');
+  const zoomOut = document.getElementById('zoomOut');
+  const zoomToggle = document.getElementById('zoom-toggle');
+
+  const baseSize = 58;
+  let zoom = 1;
+  const zoomSteps = [0.75, 0.9, 1, 1.15, 1.25, 1.4, 1.5];
+
+  function applyZoom(z) {
+    zoom = z;
+    const size = Math.round(baseSize * z);
+    frame.style.setProperty('--cell-size', size + 'px');
+    zoomVal.textContent = Math.round(z * 100) + '%';
+    // Update zoom toggle active button if preset matches
+    zoomToggle.querySelectorAll('button').forEach(b => {
+      b.classList.toggle('active', parseFloat(b.dataset.zoom) === z);
+    });
+  }
+  applyZoom(1);
+
+  zoomIn.addEventListener('click', () => {
+    const idx = zoomSteps.findIndex(s => s >= zoom);
+    const next = zoomSteps[Math.min(idx + 1, zoomSteps.length - 1)];
+    applyZoom(next);
+  });
+  zoomOut.addEventListener('click', () => {
+    const idx = zoomSteps.findIndex(s => s >= zoom);
+    const prev = zoomSteps[Math.max(idx - 1, 0)];
+    applyZoom(prev);
+  });
+
+  zoomToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    applyZoom(parseFloat(btn.dataset.zoom));
+  });
+
+  // Theme
+  const themeToggle = document.getElementById('theme-toggle');
+  themeToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    phone.classList.remove('light');
+    if (btn.dataset.theme === 'light') phone.classList.add('light');
+    themeToggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+</script>
+
+</body>
+</html>
