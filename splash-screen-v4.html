@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matrix Operations · Splash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Light */
+    --l-bg: #f5f4f0;
+    --l-bg-soft: #ffffff;
+    --l-text: #1a1a22;
+    --l-text-dim: #6a6a78;
+    --l-text-faint: #b8b8c2;
+    --l-purple: #5c5cd6;
+    --l-purple-soft: #ebebff;
+    --l-teal: #0fb87a;
+    --l-border: #e6e5dd;
+    --l-icon-shadow: 0 20px 50px -15px rgba(92, 92, 214, 0.30), 0 8px 24px -8px rgba(0, 0, 0, 0.1);
+
+    /* Dark */
+    --d-bg: #0a0a0f;
+    --d-bg-soft: #12121a;
+    --d-text: #ededf2;
+    --d-text-dim: #8a8a99;
+    --d-text-faint: #3a3a4a;
+    --d-purple: #8b8bff;
+    --d-purple-soft: #1a1a2e;
+    --d-teal: #6ee7b7;
+    --d-border: #232330;
+    --d-icon-shadow: 0 20px 50px -15px rgba(139, 139, 255, 0.30), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    min-height: 100%;
+    background: #0a0a0a;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    gap: 16px;
+  }
+
+  /* Theme toggle */
+  .toggle {
+    display: inline-flex;
+    background: #1a1a22;
+    border: 1px solid #2a2a35;
+    border-radius: 999px;
+    padding: 4px;
+    gap: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .toggle button {
+    background: transparent;
+    border: 0;
+    color: #8a8a99;
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    transition: all 0.3s ease;
+  }
+  .toggle button.active {
+    background: #8b8bff;
+    color: #0a0a0f;
+  }
+
+  /* Phone */
+  .phone {
+    width: 100%;
+    max-width: 390px;
+    aspect-ratio: 390 / 844;
+    border-radius: 48px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.5s ease, box-shadow 0.5s ease;
+  }
+
+  .phone.light {
+    background: var(--l-bg);
+    box-shadow:
+      0 0 0 2px #000,
+      0 30px 80px rgba(92, 92, 214, 0.12),
+      0 10px 40px rgba(0, 0, 0, 0.4);
+  }
+  .phone.light .status-time,
+  .phone.light .status-icons { color: var(--l-text); }
+  .phone.light .meta-top { color: var(--l-text-faint); }
+
+  .phone.dark {
+    background: var(--d-bg);
+    box-shadow:
+      0 0 0 2px #000,
+      0 30px 80px rgba(139, 139, 255, 0.12),
+      0 10px 40px rgba(0, 0, 0, 0.6);
+  }
+  .phone.dark .status-time,
+  .phone.dark .status-icons { color: var(--d-text); }
+  .phone.dark .meta-top { color: var(--d-text-faint); }
+  .phone.dark .home-indicator { background: var(--d-text); }
+
+  /* Atmosphere */
+  .phone.light::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 45%, rgba(92, 92, 214, 0.10), transparent 70%),
+      radial-gradient(ellipse 50% 30% at 50% 75%, rgba(15, 184, 122, 0.04), transparent 70%);
+    pointer-events: none;
+  }
+  .phone.dark::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 45%, rgba(139, 139, 255, 0.14), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 50% 75%, rgba(110, 231, 183, 0.04), transparent 70%);
+    pointer-events: none;
+  }
+
+  .island {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 34px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 3;
+  }
+
+  .status-bar {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 32px 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    z-index: 2;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .status-icons svg { width: 16px; height: 10px; }
+
+  .meta-top {
+    position: absolute;
+    top: 80px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 32px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    animation: fadeIn 1.2s ease-out 0.2s backwards;
+  }
+
+  /* Content */
+  .content {
+    flex: 1;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    gap: 44px;
+  }
+
+  /* App icon squircle */
+  .app-icon {
+    width: 108px;
+    height: 108px;
+    border-radius: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    animation:
+      iconEnter 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s backwards,
+      breathe 4s ease-in-out 1.2s infinite;
+  }
+  .phone.light .app-icon {
+    background: var(--l-bg-soft);
+    box-shadow: var(--l-icon-shadow);
+    border: 1px solid var(--l-border);
+  }
+  .phone.dark .app-icon {
+    background: var(--d-bg-soft);
+    box-shadow: var(--d-icon-shadow);
+    border: 1px solid var(--d-border);
+  }
+
+  /* The M glyph — width-to-height balanced */
+  .glyph {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 800;
+    font-size: 68px;
+    line-height: 1;
+    letter-spacing: -3px;
+    /* horizontal scale to widen the M optically */
+    transform: scaleX(1.18);
+    transform-origin: center;
+    /* nudge to optical center */
+    margin-top: -2px;
+  }
+  .phone.light .glyph { color: var(--l-purple); }
+  .phone.dark .glyph { color: var(--d-purple); }
+
+  /* Wordmark */
+  .wordmark {
+    text-align: center;
+    animation: fadeUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.6s backwards;
+  }
+  .wordmark-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -1.2px;
+    line-height: 1;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .phone.light .wordmark-title .part-a { color: var(--l-text); }
+  .phone.light .wordmark-title .part-b { color: var(--l-purple); }
+  .phone.dark .wordmark-title .part-a { color: var(--d-text); }
+  .phone.dark .wordmark-title .part-b { color: var(--d-purple); }
+
+  .wordmark-sub {
+    margin-top: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+  .phone.light .wordmark-sub { color: var(--l-text-dim); }
+  .phone.dark .wordmark-sub { color: var(--d-text-dim); }
+
+  .wordmark-sub .dot {
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: currentColor;
+    vertical-align: middle;
+    margin: 0 12px 2px;
+    opacity: 0.5;
+  }
+
+  /* Footer */
+  .footer {
+    position: absolute;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    animation: fadeIn 1s ease-out 1.2s backwards;
+  }
+  .loader {
+    width: 80px;
+    height: 1px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 1px;
+  }
+  .phone.light .loader { background: var(--l-border); }
+  .phone.dark .loader { background: var(--d-border); }
+  .loader::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -40%;
+    width: 40%;
+    height: 100%;
+    animation: loaderMove 1.8s ease-in-out infinite;
+  }
+  .phone.light .loader::after {
+    background: linear-gradient(90deg, transparent, var(--l-purple), transparent);
+  }
+  .phone.dark .loader::after {
+    background: linear-gradient(90deg, transparent, var(--d-purple), transparent);
+  }
+
+  .home-indicator {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 134px;
+    height: 5px;
+    background: #000;
+    border-radius: 3px;
+    opacity: 0.9;
+    z-index: 4;
+  }
+
+  /* Animations */
+  @keyframes iconEnter {
+    from { opacity: 0; transform: scale(0.86) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes loaderMove {
+    0%   { left: -40%; }
+    100% { left: 100%; }
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.015); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="toggle" id="theme-toggle">
+    <button data-theme="dark" class="active">Dark</button>
+    <button data-theme="light">Light</button>
+  </div>
+
+  <div class="phone dark" id="phone">
+    <div class="island"></div>
+
+    <div class="status-bar">
+      <span class="status-time">00:11</span>
+      <div class="status-icons">
+        <span style="font-size:13px;letter-spacing:.5px;">•••</span>
+        <svg viewBox="0 0 16 10" fill="none"><path d="M14 1v8M11 3v6M8 5v4M5 6v3M2 7v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 22 10" fill="none">
+          <rect x="1" y="1" width="17" height="8" rx="2" stroke="currentColor" stroke-width="1"/>
+          <rect x="2.5" y="2.5" width="14" height="5" rx="1" fill="currentColor"/>
+          <rect x="19" y="3.5" width="1.5" height="3" rx="0.5" fill="currentColor"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="meta-top">
+      <span>// matrix_ops</span>
+      <span>v2.0 · 2026</span>
+    </div>
+
+    <div class="content">
+      <div class="app-icon">
+        <div class="glyph">M</div>
+      </div>
+
+      <div class="wordmark">
+        <div class="wordmark-title">
+          <span class="part-a">Matrix</span><span class="part-b">Operations</span>
+        </div>
+        <div class="wordmark-sub">
+          <span>higher</span><span class="dot"></span><span>mathematics</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="loader"></div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+<script>
+  const phone = document.getElementById('phone');
+  const themeToggle = document.getElementById('theme-toggle');
+
+  themeToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    phone.classList.remove('light', 'dark');
+    phone.classList.add(btn.dataset.theme);
+    themeToggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+</script>
+
+</body>
+</html>
