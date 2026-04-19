@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Polar decomposition · HMLA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-elev: #12121a;
+    --bg-elev-2: #191922;
+    --purple: #8b8bff;
+    --purple-soft: rgba(139, 139, 255, 0.12);
+    --teal: #6ee7b7;
+    --teal-soft: rgba(110, 231, 183, 0.12);
+    --red: #ff7a7a;
+    --red-soft: rgba(255, 122, 122, 0.12);
+    --text: #ededf2;
+    --text-dim: #8a8a99;
+    --text-faint: #4a4a5a;
+    --border: #232330;
+    --border-soft: #1c1c28;
+    --solve-text: #0a0a0f;
+    --shadow-phone: 0 0 0 2px #000, 0 30px 80px rgba(139, 139, 255, 0.08), 0 10px 40px rgba(0, 0, 0, 0.6);
+
+    /* Operations */
+    --op-polar: #8b8bff;
+    --op-squareroot: #f0abfc;
+    --op-eigendecomp: #22d3ee;
+    --op-eigenvalues: #6ee7b7;
+    --op-eigenvectors: #a7f3d0;
+    --op-determinant: #ffb86e;
+    --op-inverse: #fb7185;
+    --op-transpose: #7dd3fc;
+    --op-multiply: #fde047;
+
+    /* Progress */
+    --phase-done: #2c2c40;
+    --phase-pending: #1a1a24;
+  }
+
+  .phone.light {
+    --bg: #f5f4f0;
+    --bg-elev: #ffffff;
+    --bg-elev-2: #f5f4f0;
+    --purple: #5c5cd6;
+    --purple-soft: rgba(92, 92, 214, 0.10);
+    --teal: #0fb87a;
+    --teal-soft: rgba(15, 184, 122, 0.10);
+    --red: #e04a4a;
+    --red-soft: rgba(224, 74, 74, 0.08);
+    --text: #1a1a22;
+    --text-dim: #6a6a78;
+    --text-faint: #b8b8c2;
+    --border: #e6e5dd;
+    --border-soft: #ecebe4;
+    --solve-text: #ffffff;
+    --shadow-phone: 0 0 0 2px #000, 0 30px 80px rgba(92, 92, 214, 0.12), 0 10px 40px rgba(0, 0, 0, 0.4);
+
+    --op-polar: #5c5cd6;
+    --op-squareroot: #c026d3;
+    --op-eigendecomp: #0891b2;
+    --op-eigenvalues: #0fb87a;
+    --op-eigenvectors: #10b981;
+    --op-determinant: #c2410c;
+    --op-inverse: #e11d48;
+    --op-transpose: #0284c7;
+    --op-multiply: #a16207;
+
+    --phase-done: #d9d7cf;
+    --phase-pending: #edece7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    min-height: 100%;
+    background: #0a0a0a;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    gap: 14px;
+  }
+
+  .controls-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #5a5a68;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .toggle {
+    display: inline-flex;
+    background: #1a1a22;
+    border: 1px solid #2a2a35;
+    border-radius: 999px;
+    padding: 4px; gap: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .toggle button {
+    background: transparent; border: 0;
+    color: #8a8a99;
+    padding: 8px 14px; border-radius: 999px;
+    cursor: pointer;
+    font: inherit; letter-spacing: inherit; text-transform: inherit;
+    transition: all 0.25s ease;
+  }
+  .toggle button.active { background: #8b8bff; color: #0a0a0f; }
+
+  /* PHONE */
+  .phone {
+    width: 100%; max-width: 390px;
+    aspect-ratio: 390 / 844;
+    background: var(--bg);
+    border-radius: 48px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-phone);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+    color: var(--text);
+    transition: background 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+  }
+  .island {
+    position: absolute;
+    top: 12px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 34px;
+    background: #000; border-radius: 20px; z-index: 11;
+  }
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 28px 0;
+    font-size: 15px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; color: var(--text-dim); }
+  .status-icons svg { width: 16px; height: 10px; }
+
+  /* NAV */
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px 14px;
+    gap: 12px; flex-shrink: 0;
+  }
+  .nav-btn {
+    width: 38px; height: 38px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  .nav-btn:hover { border-color: var(--purple); background: var(--purple-soft); }
+  .nav-btn svg { width: 18px; height: 18px; }
+  .nav-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px; font-weight: 500;
+    letter-spacing: -0.3px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-title .sep { color: var(--text-faint); font-family: 'DM Mono', monospace; }
+  .nav-title .accent {
+    color: var(--op-polar);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px; letter-spacing: 0.5px;
+  }
+
+  /* PROGRESS */
+  .progress-shell {
+    padding: 10px 16px 12px;
+    margin: 0 16px 10px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    flex-shrink: 0;
+  }
+  .phase-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 8px;
+  }
+  .phase-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .phase-chip {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    padding: 3px 7px; border-radius: 5px;
+    letter-spacing: 0.5px;
+    background: var(--cur-glow, var(--purple-soft));
+    color: var(--cur-color, var(--purple));
+    border: 1px solid var(--cur-line, color-mix(in srgb, var(--purple) 30%, transparent));
+    transition: all 0.3s ease;
+  }
+  .phase-of {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+  .phase-name {
+    flex: 1; font-size: 13px; font-weight: 500;
+    letter-spacing: -0.2px;
+    text-align: right; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .phase-segments {
+    display: flex; gap: 4px; margin-bottom: 8px;
+  }
+  .phase-seg {
+    flex: 1; height: 4px; border-radius: 2px;
+    background: var(--phase-pending);
+    transition: all 0.35s ease;
+  }
+  .phase-seg.done { background: var(--phase-done); }
+  .phase-seg.current {
+    background: var(--cur-color, var(--purple));
+    box-shadow: 0 0 10px var(--cur-glow, var(--purple-soft));
+  }
+
+  .step-sub {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; font-size: 10px;
+  }
+  .step-count {
+    font-family: 'DM Mono', monospace;
+    color: var(--text-faint);
+    letter-spacing: 0.3px;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .step-count b { color: var(--text-dim); font-weight: 500; }
+  .section-cur {
+    font-family: 'DM Mono', monospace;
+    color: var(--text-dim);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex: 1; text-align: right;
+    letter-spacing: 0.2px;
+  }
+  .section-cur .bullet {
+    display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--cur-color, var(--purple));
+    margin-right: 5px; vertical-align: middle;
+    animation: pulse 2s ease-in-out infinite;
+    transition: background 0.3s;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* PAGE HEADER (in scroll content) */
+  .page-header { padding: 0 20px 10px; flex-shrink: 0; }
+  .page-header .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--op-polar); margin-bottom: 6px;
+  }
+  .page-header h1 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -0.5px; line-height: 1.15;
+    margin: 0 0 4px;
+  }
+  .page-header .sub {
+    font-size: 12.5px; color: var(--text-dim); line-height: 1.45;
+  }
+
+  /* SCROLL BODY */
+  .scroll-body {
+    flex: 1; overflow-y: auto; scrollbar-width: none;
+    padding: 0 14px 80px;
+  }
+  .scroll-body::-webkit-scrollbar { display: none; }
+
+  /* Phase divider */
+  .phase-divider {
+    display: flex; align-items: center; gap: 10px;
+    padding: 22px 2px 12px;
+    scroll-margin-top: 160px;
+  }
+  .phase-divider .num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px; font-weight: 500;
+    color: var(--op-polar);
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    background: var(--purple-soft);
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, var(--op-polar) 30%, transparent);
+    flex-shrink: 0;
+  }
+  .phase-divider .name {
+    font-size: 14px; font-weight: 500;
+    letter-spacing: -0.2px; flex: 1; color: var(--text);
+  }
+  .phase-divider .line {
+    flex: 0 0 auto; width: 30px; height: 1px; background: var(--border);
+  }
+
+  /* =========================================================================
+     STEP WRAPPER
+     ========================================================================= */
+  .step-wrapper {
+    position: relative;
+    margin-bottom: 14px;
+    scroll-margin-top: 160px;
+    padding-left: 10px;
+  }
+  .step-wrapper::before {
+    content: '';
+    position: absolute;
+    left: 2px; top: 6px; bottom: 6px;
+    width: 2px; border-radius: 1px;
+    background: linear-gradient(180deg, var(--op-line, transparent), transparent 85%);
+  }
+  .step-wrapper[data-depth="1"] { padding-left: 0; }
+  .step-wrapper[data-depth="1"]::before { display: none; }
+
+  .step-wrapper-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 4px;
+    font-family: 'DM Mono', monospace;
+  }
+  .step-wrapper-header .left { display: flex; align-items: center; gap: 10px; }
+  .step-number-chip {
+    font-size: 10.5px; font-weight: 500;
+    min-width: 22px; height: 22px; padding: 0 6px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 6px;
+    background: var(--op-glow, transparent);
+    color: var(--op-color, var(--text-dim));
+    border: 1px solid var(--op-line, var(--border));
+    letter-spacing: 0.3px;
+  }
+  .step-kind {
+    font-size: 10px; color: var(--text-dim);
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .step-of {
+    font-size: 10px; color: var(--text-faint);
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .step-wrapper[data-depth="2"] .step-of,
+  .step-wrapper[data-depth="3"] .step-of {
+    color: var(--op-color, var(--text-dim)); opacity: 0.6;
+  }
+
+  .step-body {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 12px;
+    transition: all 0.25s ease;
+  }
+
+  .body-title {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .body-title .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--op-color, var(--purple));
+  }
+  .body-title .accent { color: var(--op-color, var(--purple)); }
+
+  /* Primitives */
+  .formula-accent {
+    padding: 11px 12px; margin: 8px 0;
+    border-left: 2px solid var(--op-color, var(--purple));
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    color: var(--text); line-height: 1.5;
+    overflow-x: auto; scrollbar-width: none;
+    white-space: nowrap;
+    background: var(--bg-elev-2);
+    border-radius: 0 8px 8px 0;
+  }
+  .formula-accent::-webkit-scrollbar { display: none; }
+
+  .var-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px; height: 20px; padding: 0 6px;
+    border-radius: 5px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    vertical-align: middle;
+  }
+  .var-chip.polar { background: var(--purple-soft); color: var(--op-polar); border: 1px solid color-mix(in srgb, var(--op-polar) 30%, transparent); }
+  .var-chip.squareroot { background: color-mix(in srgb, var(--op-squareroot) 12%, transparent); color: var(--op-squareroot); border: 1px solid color-mix(in srgb, var(--op-squareroot) 30%, transparent); }
+  .var-chip.eigendecomp { background: color-mix(in srgb, var(--op-eigendecomp) 12%, transparent); color: var(--op-eigendecomp); border: 1px solid color-mix(in srgb, var(--op-eigendecomp) 30%, transparent); }
+  .var-chip.eigenvalues { background: var(--teal-soft); color: var(--op-eigenvalues); border: 1px solid color-mix(in srgb, var(--op-eigenvalues) 30%, transparent); }
+  .var-chip.eigenvectors { background: color-mix(in srgb, var(--op-eigenvectors) 12%, transparent); color: var(--op-eigenvectors); border: 1px solid color-mix(in srgb, var(--op-eigenvectors) 30%, transparent); }
+  .var-chip.determinant { background: color-mix(in srgb, var(--op-determinant) 12%, transparent); color: var(--op-determinant); border: 1px solid color-mix(in srgb, var(--op-determinant) 30%, transparent); }
+  .var-chip.inverse { background: color-mix(in srgb, var(--op-inverse) 12%, transparent); color: var(--op-inverse); border: 1px solid color-mix(in srgb, var(--op-inverse) 30%, transparent); }
+  .var-chip.transpose { background: color-mix(in srgb, var(--op-transpose) 12%, transparent); color: var(--op-transpose); border: 1px solid color-mix(in srgb, var(--op-transpose) 30%, transparent); }
+
+  .var-big {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px; font-weight: 500; line-height: 1;
+    color: var(--op-color, var(--text));
+  }
+
+  /* Matrix */
+  .matrix-line {
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 0;
+    overflow-x: auto; scrollbar-width: none;
+    font-family: 'DM Mono', monospace;
+  }
+  .matrix-line::-webkit-scrollbar { display: none; }
+  .matrix-line .eq { color: var(--text-dim); font-size: 14px; }
+
+  .matrix {
+    display: grid; gap: 4px 10px;
+    padding: 8px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    position: relative; flex-shrink: 0;
+    border-left: 2px solid var(--op-color, var(--purple));
+    border-right: 2px solid var(--op-color, var(--purple));
+    color: var(--text);
+  }
+  .matrix-4 { grid-template-columns: repeat(4, auto); }
+  .matrix > * { text-align: center; min-width: 20px; }
+  .matrix::before, .matrix::after, .matrix .tr, .matrix .br {
+    content: ''; position: absolute;
+    width: 7px; height: 2px;
+    background: var(--op-color, var(--purple));
+  }
+  .matrix::before { top: 0; left: -2px; }
+  .matrix::after { bottom: 0; left: -2px; }
+  .matrix .tr { top: 0; right: -2px; }
+  .matrix .br { bottom: 0; right: -2px; }
+
+  .prose {
+    font-size: 12.5px; line-height: 1.55; color: var(--text);
+    padding: 6px 0;
+  }
+
+  .result-callout {
+    padding: 10px 12px; margin: 8px 0;
+    background: var(--teal-soft);
+    border: 1px solid var(--teal);
+    border-radius: 10px;
+  }
+  .result-callout .caption {
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px; letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--teal); margin-bottom: 5px;
+  }
+  .result-callout .value {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; line-height: 1.5;
+    word-break: break-word; color: var(--text);
+  }
+
+  .method-tabs {
+    display: flex; gap: 2px; padding: 3px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    margin: 8px 0 6px;
+  }
+  .method-tab {
+    flex: 1; padding: 6px 6px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10.5px; font-weight: 500;
+    text-align: center;
+    color: var(--text-dim); cursor: pointer;
+    letter-spacing: -0.1px;
+    transition: all 0.15s ease;
+  }
+  .method-tab.active {
+    background: var(--op-color, var(--purple));
+    color: var(--bg); font-weight: 600;
+  }
+
+  .control-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 11px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    margin: 4px 0;
+  }
+  .control-row .label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; color: var(--text-dim);
+  }
+  .control-row .value {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--text);
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 8px;
+    background: var(--bg-elev);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .coef-list {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 4px; margin: 8px 0;
+  }
+  .coef-chip {
+    padding: 6px 3px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    text-align: center;
+  }
+  .coef-chip .k {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: var(--text-faint);
+  }
+  .coef-chip .v {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--op-color, var(--purple));
+    font-weight: 500; margin-top: 1px;
+  }
+
+  /* Floating next button */
+  .next-button {
+    position: absolute;
+    bottom: 28px; left: 16px; right: 16px;
+    z-index: 20;
+    display: flex; justify-content: flex-end;
+    pointer-events: none;
+  }
+  .next-btn {
+    pointer-events: auto;
+    display: flex; align-items: center; gap: 8px;
+    padding: 11px 14px 11px 16px;
+    background: var(--cur-color, var(--purple));
+    color: var(--solve-text);
+    border: 0; border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    box-shadow: 0 10px 24px var(--cur-glow, var(--purple-soft));
+    transition: all 0.3s ease;
+  }
+
+  /* HOME INDICATOR */
+  .home-indicator {
+    position: absolute;
+    bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px;
+    background: var(--text);
+    border-radius: 3px; opacity: 0.9;
+    z-index: 30;
+  }
+</style>
+</head>
+<body>
+
+  <div class="controls-hint">polar decomposition · step wrapper</div>
+  <div class="toggle" id="theme-toggle">
+    <button data-theme="dark" class="active">Dark</button>
+    <button data-theme="light">Light</button>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="island"></div>
+
+    <div class="status-bar">
+      <span>13:26</span>
+      <div class="status-icons">
+        <span style="font-size:13px;letter-spacing:.5px;">•••</span>
+        <svg viewBox="0 0 16 10" fill="none"><path d="M14 1v8M11 3v6M8 5v4M5 6v3M2 7v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 22 10" fill="none">
+          <rect x="1" y="1" width="17" height="8" rx="2" stroke="currentColor" stroke-width="1"/>
+          <rect x="2.5" y="2.5" width="14" height="5" rx="1" fill="currentColor"/>
+          <rect x="19" y="3.5" width="1.5" height="3" rx="0.5" fill="currentColor"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="nav-title">
+        <span>Matrix</span><span class="sep">·</span><span class="accent">QH</span><span>Polar</span>
+      </div>
+      <button class="nav-btn" title="Export">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4M6 10l6-6 6 6M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="progress-shell" id="progress-shell">
+      <div class="phase-row">
+        <span class="phase-meta">
+          <span class="phase-chip" id="phase-chip">02</span>
+          <span class="phase-of">/ 5</span>
+        </span>
+        <span class="phase-name" id="phase-name">Eigendecomposition</span>
+      </div>
+      <div class="phase-segments">
+        <div class="phase-seg" data-phase="1"></div>
+        <div class="phase-seg" data-phase="2"></div>
+        <div class="phase-seg" data-phase="3"></div>
+        <div class="phase-seg" data-phase="4"></div>
+        <div class="phase-seg" data-phase="5"></div>
+      </div>
+      <div class="step-sub">
+        <span class="step-count">step <b id="step-num">5</b>/14</span>
+        <span class="section-cur">
+          <span class="bullet"></span><span id="section-cur">Determinant of A − λI</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="page-header">
+      <div class="eyebrow">A = Q · H</div>
+      <h1>Polar decomposition</h1>
+      <div class="sub">Each operation has its own identity color — tells you what's running at a glance.</div>
+    </div>
+
+    <!-- SCROLL BODY -->
+    <div class="scroll-body">
+
+      <!-- PHASE 1 -->
+      <div class="phase-divider" data-phase="1" data-phase-name="Compute AᵀA">
+        <span class="num">01</span>
+        <span class="name">Compute AᵀA</span>
+        <span class="line"></span>
+      </div>
+
+      <div class="step-wrapper" data-depth="1" data-step="1" data-op="transpose" data-title="Transpose A" data-phase="1"
+           style="--op-color: var(--op-transpose); --op-glow: color-mix(in srgb, var(--op-transpose) 12%, transparent); --op-line: color-mix(in srgb, var(--op-transpose) 35%, transparent);">
+        <div class="step-wrapper-header">
+          <div class="left">
+            <span class="step-number-chip">1</span>
+            <span class="step-kind">transpose</span>
+          </div>
+          <span class="step-of">step 1 of 14</span>
+        </div>
+        <div class="step-body">
+          <div class="body-title">
+            <span class="dot"></span>
+            <span class="accent">matrix Aᵀ</span>
+          </div>
+          <div class="prose">Take <span class="var-chip transpose">A</span>ᵀ by flipping across main diagonal.</div>
+          <div class="matrix-line">
+            <span class="var-big">Aᵀ</span>
+            <span class="eq">=</span>
+            <div class="matrix matrix-4">
+              <span class="tr"></span><span class="br"></span>
+              <span>23</span><span>8</span><span>13</span><span>9</span>
+              <span>30</span><span>11</span><span>13</span><span>12</span>
+              <span>11</span><span>7</span><span>4</span><span>8</span>
+              <span>13</span><span>4</span><span>15</span><span>7</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-wrapper" data-depth="1" data-step="2" data-op="multiply" data-title="Multiply AᵀA" data-phase="1"
+           style="--op-color: var(--op-multiply); --op-glow: color-mix(in srgb, var(--op-multiply) 12%, transparent); --op-line: color-mix(in srgb, var(--op-multiply) 35%, transparent);">
+        <div class="step-wrapper-header">
+          <div class="left">
+            <span class="step-number-chip">2</span>
+            <span class="step-kind">multiply</span>
+          </div>
+          <span class="step-of">step 2 of 14</span>
+        </div>
+        <div class="step-body">
+          <div class="body-title">
+            <span class="dot"></span>
+            <span class="accent">matrix H' = AᵀA</span>
+          </div>
+          <div class="prose">Multiply <span class="var-chip transpose">Aᵀ</span> by <span class="var-chip polar">A</span>. Result is symmetric positive-definite.</div>
+          <div class="result-callout">
+            <div class="caption">result · H'</div>
+            <div class="value">H' = symmetric 4×4 matrix</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 2 -->
+      <div class="phase-divider" data-phase="2" data-phase-name="Eigendecomposition">
+        <span class="num">02</span>
+        <span class="name">Eigendecomposition</span>
+        <span class="line"></span>
+      </div>
+
+      <div class="step-wrapper" data-depth="1" data-step="3" data-op="eigendecomp" data-title="Eigendecomposition H = PDP⁻¹" data-phase="2"
+           style="--op-color: var(--op-eigendecomp); --op-glow: color-mix(in srgb, var(--op-eigendecomp) 12%, transparent); --op-line: color-mix(in srgb, var(--op-eigendecomp) 35%, transparent);">
+        <div class="step-wrapper-header">
+          <div class="left">
+            <span class="step-number-chip">3</span>
+            <span class="step-kind">eigendecomp</span>
+          </div>
+          <span class="step-of">step 3 of 14</span>
+        </div>
+        <div class="step-body">
+          <div class="body-title">
+            <span class="dot"></span>
+            <span class="accent">H = P · D · P⁻¹</span>
+          </div>
+          <div class="prose">Decompose <span class="var-chip eigendecomp">H</span> into <span class="var-chip eigenvectors">P</span> (eigenvectors) · <span class="var-chip eigenvalues">D</span> (eigenvalues) · <span class="var-chip inverse">P⁻¹</span>.</div>
+          <div class="formula-accent">H = P · D · P⁻¹</div>
+
+          <!-- Nested L2: Eigenvalues -->
+          <div class="step-wrapper" data-depth="2" data-step="3.1" data-op="eigenvalues" data-title="Eigenvalues" data-phase="2"
+               style="--op-color: var(--op-eigenvalues); --op-glow: var(--teal-soft); --op-line: color-mix(in srgb, var(--op-eigenvalues) 35%, transparent);">
+            <div class="step-wrapper-header">
+              <div class="left">
+                <span class="step-number-chip">3.1</span>
+                <span class="step-kind">eigenvalues</span>
+              </div>
+              <span class="step-of">sub 1 of 2</span>
+            </div>
+            <div class="step-body">
+              <div class="body-title">
+                <span class="dot"></span>
+                <span class="accent">solve det(A−λI) = 0</span>
+              </div>
+              <div class="prose">Form <span class="var-chip polar">A</span> − <span class="var-chip eigenvalues">λ</span>I and solve characteristic.</div>
+
+              <!-- Nested L3: Determinant -->
+              <div class="step-wrapper" data-depth="3" data-step="3.1.1" data-op="determinant" data-title="Determinant of A − λI" data-phase="2"
+                   style="--op-color: var(--op-determinant); --op-glow: color-mix(in srgb, var(--op-determinant) 12%, transparent); --op-line: color-mix(in srgb, var(--op-determinant) 35%, transparent);">
+                <div class="step-wrapper-header">
+                  <div class="left">
+                    <span class="step-number-chip">3.1.1</span>
+                    <span class="step-kind">determinant</span>
+                  </div>
+                  <span class="step-of">sub 1 of 1</span>
+                </div>
+                <div class="step-body">
+                  <div class="body-title">
+                    <span class="dot"></span>
+                    <span class="accent">det(A − λI)</span>
+                  </div>
+                  <div class="prose">Choose method — only this sub-tree recomputes.</div>
+
+                  <div class="method-tabs">
+                    <div class="method-tab active">Decomposition</div>
+                    <div class="method-tab">Cofactor</div>
+                    <div class="method-tab">Gauss</div>
+                  </div>
+
+                  <div class="control-row">
+                    <span class="label">Decomposition by</span>
+                    <span class="value">Row
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </span>
+                  </div>
+                  <div class="control-row">
+                    <span class="label">Row number</span>
+                    <span class="value">1
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </span>
+                  </div>
+
+                  <div class="formula-accent">det(A − λI) = λ⁴ − 81λ³ + 1205λ² − 6010λ + 8464</div>
+                </div>
+              </div>
+
+              <div class="prose">Equate to zero — quartic:</div>
+              <div class="formula-accent">λ⁴ − 81λ³ + 1205λ² − 6010λ + 8464 = 0</div>
+              <div class="coef-list">
+                <div class="coef-chip"><div class="k">a</div><div class="v">1</div></div>
+                <div class="coef-chip"><div class="k">b</div><div class="v">−81</div></div>
+                <div class="coef-chip"><div class="k">c</div><div class="v">1205</div></div>
+                <div class="coef-chip"><div class="k">d</div><div class="v">−6010</div></div>
+                <div class="coef-chip"><div class="k">e</div><div class="v">8464</div></div>
+              </div>
+
+              <div class="result-callout">
+                <div class="caption">λ roots</div>
+                <div class="value">λ₁ = 52.82 &nbsp; λ₂ = 18.47<br>λ₃ = 6.31 &nbsp;&nbsp; λ₄ = 3.40</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nested L2: Eigenvectors -->
+          <div class="step-wrapper" data-depth="2" data-step="3.2" data-op="eigenvectors" data-title="Eigenvectors" data-phase="2"
+               style="--op-color: var(--op-eigenvectors); --op-glow: color-mix(in srgb, var(--op-eigenvectors) 12%, transparent); --op-line: color-mix(in srgb, var(--op-eigenvectors) 35%, transparent);">
+            <div class="step-wrapper-header">
+              <div class="left">
+                <span class="step-number-chip">3.2</span>
+                <span class="step-kind">eigenvectors</span>
+              </div>
+              <span class="step-of">sub 2 of 2</span>
+            </div>
+            <div class="step-body">
+              <div class="body-title">
+                <span class="dot"></span>
+                <span class="accent">v₁, v₂, v₃, v₄</span>
+              </div>
+              <div class="prose">Solve <span class="var-chip eigenvectors">(A − λᵢI)v = 0</span> for each λ.</div>
+              <div class="formula-accent">v₁ = [1.729, 1.795, 0.375, 1.000]<br>v₂ = [0.313, −0.658, −0.747, 1.000]</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PHASE 3 -->
+      <div class="phase-divider" data-phase="3" data-phase-name="Square root H">
+        <span class="num">03</span>
+        <span class="name">Square root H</span>
+        <span class="line"></span>
+      </div>
+
+      <div class="step-wrapper" data-depth="1" data-step="4" data-op="squareroot" data-title="Square root of H" data-phase="3"
+           style="--op-color: var(--op-squareroot); --op-glow: color-mix(in srgb, var(--op-squareroot) 12%, transparent); --op-line: color-mix(in srgb, var(--op-squareroot) 35%, transparent);">
+        <div class="step-wrapper-header">
+          <div class="left">
+            <span class="step-number-chip">4</span>
+            <span class="step-kind">square root</span>
+          </div>
+          <span class="step-of">step 4 of 14</span>
+        </div>
+        <div class="step-body">
+          <div class="body-title">
+            <span class="dot"></span>
+            <span class="accent">S = P · √D · P⁻¹</span>
+          </div>
+          <div class="prose">Using already-computed <span class="var-chip eigenvectors">P</span> and <span class="var-chip eigenvalues">D</span>.</div>
+          <div class="result-callout">
+            <div class="caption">result · H (symm pos-def)</div>
+            <div class="value">H = [[4.12, 0.61, ...], [0.61, 3.89, ...], ...]</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 4 -->
+      <div class="phase-divider" data-phase="4" data-phase-name="Compute Q">
+        <span class="num">04</span>
+        <span class="name">Compute orthogonal Q</span>
+        <span class="line"></span>
+      </div>
+
+      <div class="step-wrapper" data-depth="1" data-step="5" data-op="inverse" data-title="Invert H" data-phase="4"
+           style="--op-color: var(--op-inverse); --op-glow: color-mix(in srgb, var(--op-inverse) 12%, transparent); --op-line: color-mix(in srgb, var(--op-inverse) 35%, transparent);">
+        <div class="step-wrapper-header">
+          <div class="left">
+            <span class="step-number-chip">5</span>
+            <span class="step-kind">inverse</span>
+          </div>
+          <span class="step-of">step 5 of 14</span>
+        </div>
+        <div class="step-body">
+          <div class="body-title">
+            <span class="dot"></span>
+            <span class="accent">H⁻¹</span>
+          </div>
+          <div class="prose">Compute inverse of <span class="var-chip squareroot">H</span>.</div>
+          <div class="formula-accent">H⁻¹ = adj(H) / det(H)</div>
+        </div>
+      </div>
+
+      <div class="step-wrapper" data-depth="1" data-step="6" data-op="multiply" data-title="Q = A·H⁻¹" data-phase="4"
+           style="--op-color: var(--op-multiply); --op-glow: color-mix(in srgb, var(--op-multiply) 12%, transparent); --op-line: color-mix(in srgb, var(--op-multiply) 35%, transparent);">
+        <div class="step-wrapper-header">
+          <div class="left">
+            <span class="step-number-chip">6</span>
+            <span class="step-kind">multiply</span>
+          </div>
+          <span class="step-of">step 6 of 14</span>
+        </div>
+        <div class="step-body">
+          <div class="body-title">
+            <span class="dot"></span>
+            <span class="accent">Q = A · H⁻¹</span>
+          </div>
+          <div class="prose">Multiply <span class="var-chip polar">A</span> by <span class="var-chip inverse">H⁻¹</span> to get orthogonal <span class="var-chip polar">Q</span>.</div>
+          <div class="result-callout">
+            <div class="caption">result · Q orthogonal</div>
+            <div class="value">Q = [[0.71, 0.42, ...], [...], ...]</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 5 -->
+      <div class="phase-divider" data-phase="5" data-phase-name="Verify A = QH">
+        <span class="num">05</span>
+        <span class="name">Verify A = QH</span>
+        <span class="line"></span>
+      </div>
+
+      <div class="step-wrapper" data-depth="1" data-step="7" data-op="polar" data-title="Compare Q·H with A" data-phase="5"
+           style="--op-color: var(--op-polar); --op-glow: var(--purple-soft); --op-line: color-mix(in srgb, var(--op-polar) 35%, transparent);">
+        <div class="step-wrapper-header">
+          <div class="left">
+            <span class="step-number-chip">7</span>
+            <span class="step-kind">verify</span>
+          </div>
+          <span class="step-of">step 7 of 14</span>
+        </div>
+        <div class="step-body">
+          <div class="body-title">
+            <span class="dot"></span>
+            <span class="accent">residual check</span>
+          </div>
+          <div class="result-callout">
+            <div class="caption">✓ decomposition complete</div>
+            <div class="value">Q · H = A &nbsp; (residual &lt; 1e−10)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="next-button">
+      <button class="next-btn" id="next-btn">
+        next step
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+<script>
+  const phone = document.getElementById('phone');
+  const phaseEls = [...document.querySelectorAll('.phase-divider')];
+  const stepEls = [...document.querySelectorAll('.step-wrapper[data-step]')];
+  const phaseSegs = [...document.querySelectorAll('.phase-seg')];
+  const phaseChip = document.getElementById('phase-chip');
+  const phaseName = document.getElementById('phase-name');
+  const stepNum = document.getElementById('step-num');
+  const sectionCur = document.getElementById('section-cur');
+  const nextBtn = document.getElementById('next-btn');
+  const progressShell = document.getElementById('progress-shell');
+  const scrollBody = document.querySelector('.scroll-body');
+
+  function getOpVars(opName) {
+    return {
+      color: `var(--op-${opName})`,
+      glow: `color-mix(in srgb, var(--op-${opName}) 12%, transparent)`,
+      line: `color-mix(in srgb, var(--op-${opName}) 35%, transparent)`,
+    };
+  }
+
+  function update(phase, phaseName_, opName, step, title) {
+    const { color, glow, line } = getOpVars(opName);
+
+    progressShell.style.setProperty('--cur-color', color);
+    progressShell.style.setProperty('--cur-glow', glow);
+    progressShell.style.setProperty('--cur-line', line);
+    nextBtn.style.setProperty('--cur-color', color);
+    nextBtn.style.setProperty('--cur-glow', glow);
+
+    phaseChip.textContent = String(phase).padStart(2, '0');
+    phaseName.textContent = phaseName_;
+
+    phaseSegs.forEach((seg, i) => {
+      seg.classList.remove('done', 'current');
+      if (i + 1 < phase) seg.classList.add('done');
+      if (i + 1 === phase) seg.classList.add('current');
+    });
+
+    if (step) stepNum.textContent = step;
+    if (title) sectionCur.textContent = title;
+  }
+
+  function findCurrent() {
+    const anchor = scrollBody.getBoundingClientRect().top + 40;
+    let latestStep = null;
+    for (const el of stepEls) {
+      const r = el.getBoundingClientRect();
+      if (r.top <= anchor) latestStep = el;
+    }
+    let latestPhase = null;
+    for (const el of phaseEls) {
+      const r = el.getBoundingClientRect();
+      if (r.top <= anchor) latestPhase = el;
+    }
+    const phase = latestPhase ? parseInt(latestPhase.dataset.phase, 10) : 1;
+    const phaseName_ = latestPhase ? latestPhase.dataset.phaseName : phaseEls[0].dataset.phaseName;
+    if (latestStep) {
+      update(phase, phaseName_, latestStep.dataset.op, latestStep.dataset.step, latestStep.dataset.title);
+    } else {
+      update(phase, phaseName_, stepEls[0].dataset.op, '1', stepEls[0].dataset.title);
+    }
+  }
+
+  let ticking = false;
+  scrollBody.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => { findCurrent(); ticking = false; });
+      ticking = true;
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    const anchor = scrollBody.getBoundingClientRect().top + 40;
+    for (const el of stepEls) {
+      const r = el.getBoundingClientRect();
+      if (r.top > anchor + 10) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+    }
+  });
+
+  document.getElementById('theme-toggle').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    phone.classList.toggle('light', btn.dataset.theme === 'light');
+    document.getElementById('theme-toggle').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+
+  findCurrent();
+</script>
+
+</body>
+</html>

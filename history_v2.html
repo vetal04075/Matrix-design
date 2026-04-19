@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>History · HMLA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =========================================================================
+     MASTER TOKENS (matching matrix-addition-main.html)
+     ========================================================================= */
+  :root {
+    --bg: #0a0a0f;
+    --bg-elev: #12121a;
+    --bg-elev-2: #191922;
+    --purple: #8b8bff;
+    --purple-soft: rgba(139, 139, 255, 0.12);
+    --teal: #6ee7b7;
+    --teal-soft: rgba(110, 231, 183, 0.12);
+    --red: #ff7a7a;
+    --red-soft: rgba(255, 122, 122, 0.12);
+    --text: #ededf2;
+    --text-dim: #8a8a99;
+    --text-faint: #4a4a5a;
+    --border: #232330;
+    --border-soft: #1c1c28;
+    --solve-text: #0a0a0f;
+    --cell-empty: #4a4a5a;
+    --shadow-phone: 0 0 0 2px #000, 0 30px 80px rgba(139, 139, 255, 0.08), 0 10px 40px rgba(0, 0, 0, 0.6);
+
+    --op-add: #67e8f9;
+    --op-subtract: #22d3ee;
+    --op-scalar: #06b6d4;
+    --op-multiply: #fde047;
+    --op-power: #fbbf24;
+    --op-determinant: #ffb86e;
+    --op-inverse: #fb7185;
+    --op-minor: #f472b6;
+    --op-cofactor: #e879f9;
+    --op-adjoint: #d8b4fe;
+    --op-transpose: #7dd3fc;
+    --op-conjugate: #38bdf8;
+    --op-sqrt: #f0abfc;
+    --op-lu: #a3e635;
+    --op-qr: #34d399;
+    --op-cholesky: #10b981;
+    --op-schur: #14b8a6;
+    --op-eigendecomp: #22d3ee;
+    --op-eigenvalues: #6ee7b7;
+    --op-eigenvectors: #a7f3d0;
+    --op-polar: #8b8bff;
+    --op-svd: #c4b5fd;
+    --op-rank: #f9a8d4;
+    --op-system: #c4b5fd;
+    --op-equations: #fcd34d;
+  }
+
+  .phone.light {
+    --bg: #f5f4f0;
+    --bg-elev: #ffffff;
+    --bg-elev-2: #f5f4f0;
+    --purple: #5c5cd6;
+    --purple-soft: rgba(92, 92, 214, 0.10);
+    --teal: #0fb87a;
+    --teal-soft: rgba(15, 184, 122, 0.10);
+    --red: #e04a4a;
+    --red-soft: rgba(224, 74, 74, 0.08);
+    --text: #1a1a22;
+    --text-dim: #6a6a78;
+    --text-faint: #b8b8c2;
+    --border: #e6e5dd;
+    --border-soft: #ecebe4;
+    --solve-text: #ffffff;
+    --cell-empty: #c8c7bf;
+    --shadow-phone: 0 0 0 2px #000, 0 30px 80px rgba(92, 92, 214, 0.12), 0 10px 40px rgba(0, 0, 0, 0.4);
+
+    --op-add: #0e7490;
+    --op-subtract: #0891b2;
+    --op-scalar: #155e75;
+    --op-multiply: #a16207;
+    --op-power: #b45309;
+    --op-determinant: #c2410c;
+    --op-inverse: #e11d48;
+    --op-minor: #be185d;
+    --op-cofactor: #a21caf;
+    --op-adjoint: #7e22ce;
+    --op-transpose: #0284c7;
+    --op-conjugate: #0369a1;
+    --op-sqrt: #c026d3;
+    --op-lu: #65a30d;
+    --op-qr: #059669;
+    --op-cholesky: #047857;
+    --op-schur: #0d9488;
+    --op-eigendecomp: #0891b2;
+    --op-eigenvalues: #0fb87a;
+    --op-eigenvectors: #10b981;
+    --op-polar: #5c5cd6;
+    --op-svd: #7c3aed;
+    --op-rank: #be185d;
+    --op-system: #7c3aed;
+    --op-equations: #a16207;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    min-height: 100%;
+    background: #0a0a0a;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    gap: 14px;
+  }
+
+  .controls-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #5a5a68;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .toggle {
+    display: inline-flex;
+    background: #1a1a22;
+    border: 1px solid #2a2a35;
+    border-radius: 999px;
+    padding: 4px;
+    gap: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .toggle button {
+    background: transparent; border: 0;
+    color: #8a8a99;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font: inherit; letter-spacing: inherit; text-transform: inherit;
+    transition: all 0.25s ease;
+  }
+  .toggle button.active { background: #8b8bff; color: #0a0a0f; }
+  .variant-bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+  /* =========================================================================
+     PHONE FRAME
+     ========================================================================= */
+  .phone {
+    width: 100%;
+    max-width: 390px;
+    aspect-ratio: 390 / 844;
+    background: var(--bg);
+    border-radius: 48px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-phone);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: var(--text);
+    transition: background 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .island {
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 34px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 11;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 28px 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; color: var(--text-dim); }
+  .status-icons svg { width: 16px; height: 10px; }
+
+  /* NAV */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 14px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    width: 38px; height: 38px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  .nav-btn:hover { border-color: var(--purple); background: var(--purple-soft); }
+  .nav-btn svg { width: 18px; height: 18px; }
+  .nav-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-title .sep { color: var(--text-faint); font-family: 'DM Mono', monospace; }
+  .nav-title .accent {
+    color: var(--purple);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+  }
+
+  /* SEARCH BAR (same pattern as size-bar) */
+  .search-bar {
+    margin: 4px 16px 10px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: border-color 0.2s ease;
+    flex-shrink: 0;
+  }
+  .search-bar:focus-within { border-color: var(--purple); }
+  .search-bar svg { color: var(--text-faint); flex-shrink: 0; }
+  .search-bar input {
+    flex: 1; background: transparent; border: 0; outline: 0;
+    color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif;
+  }
+  .search-bar input::placeholder {
+    color: var(--text-faint);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+
+  /* FILTER CHIPS */
+  .filter-row {
+    display: flex; gap: 6px;
+    overflow-x: auto; scrollbar-width: none;
+    padding: 0 16px 12px;
+    flex-shrink: 0;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    padding: 7px 12px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+  .filter-chip:hover { border-color: var(--text-dim); color: var(--text); }
+  .filter-chip.active {
+    background: var(--purple-soft);
+    color: var(--purple);
+    border-color: var(--purple);
+  }
+  .filter-chip .count { color: var(--text-faint); }
+  .filter-chip.active .count { color: var(--purple); opacity: 0.7; }
+
+  /* SCROLL BODY */
+  .scroll-body {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding: 0 16px 20px;
+  }
+  .scroll-body::-webkit-scrollbar { display: none; }
+
+  /* =========================================================================
+     HISTORY CARDS (swipeable)
+     ========================================================================= */
+  .card-row {
+    position: relative;
+    margin-bottom: 8px;
+    overflow: hidden;
+    border-radius: 14px;
+  }
+
+  .card-actions {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    display: flex;
+    pointer-events: none;
+  }
+  .card-actions .action {
+    width: 64px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    pointer-events: auto;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+  .card-actions .action.edit {
+    background: var(--purple);
+    color: var(--solve-text);
+  }
+  .card-actions .action.delete {
+    background: var(--red);
+    color: #0a0a0f;
+    border-radius: 0 14px 14px 0;
+  }
+  .phone.light .card-actions .action.delete { color: #fff; }
+
+  .card {
+    position: relative;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1), border-color 0.2s ease;
+    touch-action: pan-y;
+    z-index: 1;
+  }
+  .card:hover {
+    border-color: var(--op-color, var(--purple));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--op-color, var(--purple)) 12%, transparent);
+  }
+  .card.swiping { transition: none; }
+  .card.revealed { transform: translateX(-128px); }
+
+  .card-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .op-icon {
+    width: 30px; height: 30px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--op-color, var(--purple));
+    letter-spacing: 0.3px;
+  }
+  .op-title {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+    color: var(--text);
+  }
+  .op-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    color: var(--text-faint);
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+
+  .preview {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 9px;
+    background: var(--teal-soft);
+    border: 1px solid color-mix(in srgb, var(--teal) 30%, transparent);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--teal);
+    margin-bottom: 8px;
+    max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    letter-spacing: 0.2px;
+  }
+  .preview svg { width: 10px; height: 10px; flex-shrink: 0; }
+
+  .params {
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  .param-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    color: var(--text-dim);
+    letter-spacing: 0.2px;
+  }
+  .param-chip .k { color: var(--text-faint); }
+  .param-chip .v { color: var(--text); }
+
+  /* HOME INDICATOR */
+  .home-indicator {
+    position: absolute;
+    bottom: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 134px; height: 5px;
+    background: var(--text);
+    border-radius: 3px;
+    opacity: 0.9;
+    z-index: 30;
+  }
+
+  /* VARIANT: single-op mode */
+  .phone.single-op .filter-row { display: none; }
+  .phone.single-op .card-head .op-icon { display: none; }
+  .phone.single-op .card-head .op-title { display: none; }
+  .phone.single-op .card-head { justify-content: flex-end; }
+
+  /* View mode */
+  .phone:not(.view-history) .view-history-nav { display: none; }
+  .phone:not(.view-single) .view-single-nav { display: none; }
+  .phone:not(.view-history) .filter-row { display: none; }
+  .phone.view-single .filter-row { display: none; }
+
+  /* Single-op summary bar */
+  .op-summary {
+    display: none;
+    margin: 0 16px 10px;
+    padding: 8px 12px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    align-items: center;
+    gap: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+  .phone.view-single .op-summary { display: flex; }
+  .op-summary .count-chip {
+    padding: 3px 8px;
+    background: var(--op-color, var(--op-add));
+    color: var(--bg);
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="controls-hint">history · all &amp; single-op</div>
+
+  <div class="toggle" id="theme-toggle">
+    <button data-theme="dark" class="active">Dark</button>
+    <button data-theme="light">Light</button>
+  </div>
+
+  <div class="variant-bar">
+    <div class="toggle" id="view-toggle">
+      <button data-view="history" class="active">All History</button>
+      <button data-view="single">Matrix Addition</button>
+    </div>
+  </div>
+
+  <div class="phone view-history" id="phone">
+    <div class="island"></div>
+
+    <div class="status-bar">
+      <span>20:59</span>
+      <div class="status-icons">
+        <span style="font-size:13px;letter-spacing:.5px;">•••</span>
+        <svg viewBox="0 0 16 10" fill="none"><path d="M14 1v8M11 3v6M8 5v4M5 6v3M2 7v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 22 10" fill="none">
+          <rect x="1" y="1" width="17" height="8" rx="2" stroke="currentColor" stroke-width="1"/>
+          <rect x="2.5" y="2.5" width="14" height="5" rx="1" fill="currentColor"/>
+          <rect x="19" y="3.5" width="1.5" height="3" rx="0.5" fill="currentColor"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- NAV: history mode -->
+    <div class="nav view-history-nav">
+      <button class="nav-btn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="nav-title">
+        <span class="accent">HMLA</span><span class="sep">·</span><span>history</span>
+      </div>
+      <button class="nav-btn" title="Clear all">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <!-- NAV: single-op mode -->
+    <div class="nav view-single-nav">
+      <button class="nav-btn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="nav-title">
+        <span>Matrix</span><span class="sep">·</span><span class="accent" style="color: var(--op-add);">+</span><span>Addition</span>
+      </div>
+      <button class="nav-btn" title="Clear all">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-bar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input type="text" id="search-input" placeholder="search saved operations...">
+    </div>
+
+    <!-- FILTER CHIPS (only in history mode) -->
+    <div class="filter-row" id="filter-row">
+      <div class="filter-chip active" data-filter="all">all <span class="count">· 28</span></div>
+      <div class="filter-chip" data-filter="decomp">decompositions <span class="count">· 9</span></div>
+      <div class="filter-chip" data-filter="arith">arithmetic <span class="count">· 12</span></div>
+      <div class="filter-chip" data-filter="prop">properties <span class="count">· 7</span></div>
+    </div>
+
+    <!-- OP SUMMARY (only in single-op mode) -->
+    <div class="op-summary" style="--op-color: var(--op-add);">
+      <span class="count-chip">7 saved</span>
+      <span>most recent first</span>
+    </div>
+
+    <!-- CARDS -->
+    <div class="scroll-body" id="scroll-body"></div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+<script>
+  // Data
+  const ops = {
+    lu: { label: 'LU decomposition', family: 'decomp', color: 'lu', symbol: 'LU' },
+    determinant: { label: 'Matrix determinant', family: 'prop', color: 'determinant', symbol: 'det' },
+    multiply: { label: 'Matrix multiplication', family: 'arith', color: 'multiply', symbol: 'A·B' },
+    add: { label: 'Matrix addition', family: 'arith', color: 'add', symbol: 'A+B' },
+    polar: { label: 'Polar decomposition', family: 'decomp', color: 'polar', symbol: 'QH' },
+    svd: { label: 'Singular Value Decomposition', family: 'decomp', color: 'svd', symbol: 'UΣV' },
+    inverse: { label: 'Matrix inverse', family: 'prop', color: 'inverse', symbol: 'A⁻¹' },
+    transpose: { label: 'Matrix transpose', family: 'arith', color: 'transpose', symbol: 'Aᵀ' },
+    eigenvalues: { label: 'Eigenvalues', family: 'prop', color: 'eigenvalues', symbol: 'λ' },
+    qr: { label: 'QR decomposition', family: 'decomp', color: 'qr', symbol: 'QR' },
+  };
+
+  const historyItems = [
+    { op: 'lu', params: [{k:'A',v:'4×4'}], preview: 'L, U · 4×4 ready', time: '18 Apr 2026 · 13:19' },
+    { op: 'determinant', params: [{k:'A',v:'4×4'},{k:'method',v:'Decomp'},{k:'row',v:'1'}], preview: 'det = 8464', time: '18 Apr 2026 · 13:19' },
+    { op: 'multiply', params: [{k:'A',v:'4×4'},{k:'B',v:'4×4'}], preview: 'C = 4×4', time: '18 Apr 2026 · 13:19' },
+    { op: 'add', params: [{k:'A',v:'4×4'},{k:'B',v:'4×4'}], preview: 'C = 4×4', time: '18 Apr 2026 · 11:50' },
+    { op: 'polar', params: [{k:'A',v:'4×4'}], preview: 'Q·H verified', time: '26 Sep 2025 · 23:11' },
+    { op: 'svd', params: [{k:'A',v:'4×4'}], preview: 'σ₁=12.4, σ₂=8.2 ...', time: '26 Sep 2025 · 23:09' },
+    { op: 'inverse', params: [{k:'A',v:'4×4'},{k:'method',v:'Cofactor'}], preview: 'A⁻¹ · det ≠ 0', time: '26 Sep 2025 · 23:09' },
+    { op: 'eigenvalues', params: [{k:'A',v:'4×4'}], preview: 'λ₁=52.82, λ₂=18.47 ...', time: '22 Sep 2025 · 09:41' },
+    { op: 'transpose', params: [{k:'A',v:'3×5'}], preview: 'Aᵀ = 5×3', time: '21 Sep 2025 · 14:02' },
+    { op: 'qr', params: [{k:'A',v:'5×4'}], preview: 'Q, R ready', time: '20 Sep 2025 · 18:23' },
+  ];
+
+  const additionItems = [
+    { params: [{k:'A',v:'4×4'},{k:'B',v:'4×4'}], preview: 'C = 4×4', time: '18 Apr 2026 · 20:58' },
+    { params: [{k:'A',v:'4×4'},{k:'B',v:'4×4'}], preview: 'C = 4×4', time: '18 Apr 2026 · 20:58' },
+    { params: [{k:'A',v:'3×3'},{k:'B',v:'3×3'}], preview: 'C = 3×3', time: '18 Apr 2026 · 14:12' },
+    { params: [{k:'A',v:'2×2'},{k:'B',v:'2×2'}], preview: 'C = 2×2 · all ones', time: '17 Apr 2026 · 22:45' },
+    { params: [{k:'A',v:'5×5'},{k:'B',v:'5×5'}], preview: 'C = 5×5', time: '15 Apr 2026 · 11:03' },
+    { params: [{k:'A',v:'4×4'},{k:'B',v:'4×4'}], preview: 'C = 4×4 · symmetric', time: '12 Apr 2026 · 17:28' },
+    { params: [{k:'A',v:'3×4'},{k:'B',v:'3×4'}], preview: 'C = 3×4', time: '11 Apr 2026 · 09:15' },
+  ];
+
+  function renderCard(item, isSingle = false) {
+    const op = ops[item.op] || { color: 'add', symbol: 'A+B', label: '' };
+    const paramsHtml = item.params.map(p => `<span class="param-chip"><span class="k">${p.k}</span><span class="v">${p.v}</span></span>`).join('');
+    const head = isSingle
+      ? `<div class="card-head"><span class="op-time">${item.time}</span></div>`
+      : `<div class="card-head">
+          <div class="op-icon">${op.symbol}</div>
+          <div class="op-title">${op.label}</div>
+          <span class="op-time">${item.time}</span>
+        </div>`;
+
+    return `
+      <div class="card-row">
+        <div class="card-actions">
+          <div class="action edit">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            edit
+          </div>
+          <div class="action delete">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            delete
+          </div>
+        </div>
+        <div class="card" style="--op-color: var(--op-${op.color});">
+          ${head}
+          <div class="preview">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${item.preview}
+          </div>
+          <div class="params">${paramsHtml}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('scroll-body');
+    list.innerHTML = historyItems.map(i => renderCard(i, false)).join('');
+    attachSwipeHandlers(list);
+  }
+  function renderSingle() {
+    const list = document.getElementById('scroll-body');
+    list.innerHTML = additionItems.map(i => renderCard({ ...i, op: 'add' }, true)).join('');
+    attachSwipeHandlers(list);
+  }
+
+  // Swipe logic (same as before, simplified)
+  function attachSwipeHandlers(container) {
+    let active, startX, startY, isSwiping = false, isHorizontal = false, currentX = 0;
+
+    container.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('touchstart', onStart, { passive: true });
+      card.addEventListener('touchmove', onMove, { passive: false });
+      card.addEventListener('touchend', onEnd);
+      card.addEventListener('mousedown', onStart);
+    });
+
+    function onStart(e) {
+      container.querySelectorAll('.card.revealed').forEach(c => { if (c !== e.currentTarget) c.classList.remove('revealed'); });
+      active = e.currentTarget;
+      const t = e.touches ? e.touches[0] : e;
+      startX = t.clientX; startY = t.clientY;
+      currentX = active.classList.contains('revealed') ? -128 : 0;
+      isSwiping = false; isHorizontal = false;
+      if (e.type === 'mousedown') {
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+      }
+    }
+    function onMove(e) {
+      if (!active) return;
+      const t = e.touches ? e.touches[0] : e;
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      if (!isSwiping) {
+        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+          isSwiping = true;
+          isHorizontal = Math.abs(dx) > Math.abs(dy);
+          if (isHorizontal) active.classList.add('swiping');
+        }
+        return;
+      }
+      if (!isHorizontal) return;
+      e.preventDefault();
+      const base = active.classList.contains('revealed') ? -128 : 0;
+      let tx = base + dx;
+      if (tx > 0) tx = tx * 0.3;
+      if (tx < -180) tx = -180 + (tx + 180) * 0.3;
+      currentX = tx;
+      active.style.transform = `translateX(${tx}px)`;
+    }
+    function onEnd() {
+      if (!active) return;
+      active.classList.remove('swiping');
+      active.style.transform = '';
+      if (isSwiping && isHorizontal) {
+        if (currentX < -50) active.classList.add('revealed');
+        else active.classList.remove('revealed');
+      }
+      active = null;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onEnd);
+    }
+
+    container.querySelectorAll('.action').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const row = btn.closest('.card-row');
+        if (btn.classList.contains('delete')) {
+          row.style.transition = 'opacity 0.2s, max-height 0.3s, margin 0.3s';
+          row.style.opacity = '0';
+          row.style.maxHeight = '0';
+          row.style.margin = '0';
+          setTimeout(() => row.remove(), 300);
+        } else {
+          const card = row.querySelector('.card');
+          card.classList.remove('revealed');
+          card.style.transform = '';
+          card.style.boxShadow = '0 0 0 2px var(--purple)';
+          setTimeout(() => card.style.boxShadow = '', 500);
+        }
+      });
+    });
+  }
+
+  // Toggles
+  const phone = document.getElementById('phone');
+  document.getElementById('theme-toggle').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    phone.classList.toggle('light', btn.dataset.theme === 'light');
+    document.getElementById('theme-toggle').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+  document.getElementById('view-toggle').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    const isSingle = btn.dataset.view === 'single';
+    phone.classList.toggle('view-history', !isSingle);
+    phone.classList.toggle('view-single', isSingle);
+    document.getElementById('view-toggle').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (isSingle) renderSingle(); else renderHistory();
+  });
+
+  document.getElementById('search-input').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll('.card-row').forEach(row => {
+      const txt = row.textContent.toLowerCase();
+      row.style.display = txt.includes(q) ? '' : 'none';
+    });
+  });
+
+  document.getElementById('filter-row').addEventListener('click', e => {
+    const chip = e.target.closest('.filter-chip'); if (!chip) return;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+
+  renderHistory();
+</script>
+
+</body>
+</html>
