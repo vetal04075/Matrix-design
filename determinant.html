@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matrix determinant · HMLA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-elev: #12121a;
+    --bg-elev-2: #191922;
+    --purple: #8b8bff;
+    --purple-soft: rgba(139, 139, 255, 0.12);
+    --teal: #6ee7b7;
+    --teal-soft: rgba(110, 231, 183, 0.12);
+    --red: #ff7a7a;
+    --red-soft: rgba(255, 122, 122, 0.12);
+    --text: #ededf2;
+    --text-dim: #8a8a99;
+    --text-faint: #4a4a5a;
+    --border: #232330;
+    --border-soft: #1c1c28;
+    --solve-text: #0a0a0f;
+    --cell-empty: #4a4a5a;
+    --shadow-phone: 0 0 0 2px #000, 0 30px 80px rgba(139, 139, 255, 0.08), 0 10px 40px rgba(0, 0, 0, 0.6);
+
+    /* determinant = orange */
+    --op-color: #ffb86e;
+    --op-color-soft: rgba(255, 184, 110, 0.12);
+    --op-color-line: rgba(255, 184, 110, 0.35);
+  }
+
+  .phone.light {
+    --bg: #f5f4f0;
+    --bg-elev: #ffffff;
+    --bg-elev-2: #f5f4f0;
+    --purple: #5c5cd6;
+    --purple-soft: rgba(92, 92, 214, 0.10);
+    --teal: #0fb87a;
+    --teal-soft: rgba(15, 184, 122, 0.10);
+    --red: #e04a4a;
+    --red-soft: rgba(224, 74, 74, 0.08);
+    --text: #1a1a22;
+    --text-dim: #6a6a78;
+    --text-faint: #b8b8c2;
+    --border: #e6e5dd;
+    --border-soft: #ecebe4;
+    --solve-text: #ffffff;
+    --cell-empty: #c8c7bf;
+    --shadow-phone: 0 0 0 2px #000, 0 30px 80px rgba(92, 92, 214, 0.12), 0 10px 40px rgba(0, 0, 0, 0.4);
+
+    --op-color: #c2410c;
+    --op-color-soft: rgba(194, 65, 12, 0.08);
+    --op-color-line: rgba(194, 65, 12, 0.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    min-height: 100%;
+    background: #0a0a0a;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 24px; gap: 14px;
+  }
+
+  .controls-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: #5a5a68;
+    letter-spacing: 1px; text-transform: uppercase;
+    text-align: center;
+  }
+
+  .toggle {
+    display: inline-flex;
+    background: #1a1a22; border: 1px solid #2a2a35;
+    border-radius: 999px; padding: 4px; gap: 2px;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .toggle button {
+    background: transparent; border: 0;
+    color: #8a8a99; padding: 8px 14px;
+    border-radius: 999px; cursor: pointer;
+    font: inherit; letter-spacing: inherit; text-transform: inherit;
+    transition: all 0.25s ease;
+  }
+  .toggle button.active { background: #8b8bff; color: #0a0a0f; }
+
+  /* PHONE */
+  .phone {
+    width: 100%; max-width: 390px;
+    aspect-ratio: 390 / 844;
+    background: var(--bg); border-radius: 48px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-phone);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+    color: var(--text);
+    transition: background 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+  }
+  .island {
+    position: absolute; top: 12px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 34px;
+    background: #000; border-radius: 20px; z-index: 11;
+  }
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 28px 0;
+    font-size: 15px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; color: var(--text-dim); }
+  .status-icons svg { width: 16px; height: 10px; }
+
+  /* NAV */
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px 14px; gap: 12px;
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    width: 38px; height: 38px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  .nav-btn:hover { border-color: var(--purple); background: var(--purple-soft); }
+  .nav-btn svg { width: 18px; height: 18px; }
+  .nav-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px; font-weight: 500;
+    letter-spacing: -0.3px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-title .sep { color: var(--text-faint); font-family: 'DM Mono', monospace; }
+  .nav-title .op {
+    color: var(--op-color);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  /* CONFIG CARD: size, method, (conditional) decompose by, (conditional) row/col number */
+  .config-card {
+    margin: 4px 16px 16px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px 14px;
+    flex-shrink: 0;
+    display: flex; flex-direction: column;
+  }
+  .config-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-soft);
+    min-height: 46px;
+  }
+  .config-row:last-child { border-bottom: none; }
+
+  .config-row.conditional {
+    max-height: 0;
+    padding: 0;
+    opacity: 0;
+    overflow: hidden;
+    border-bottom: none;
+    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.2s ease, border-color 0.3s ease;
+  }
+  .config-row.conditional.visible {
+    max-height: 50px;
+    padding: 10px 0;
+    opacity: 1;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .config-row.conditional.visible + .config-row { /* restore border for next row */ }
+
+  .config-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: -0.1px;
+  }
+  .config-label .sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    color: var(--text-faint);
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* Stepper */
+  .stepper-row {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+  }
+  .stepper-row.disabled { opacity: 0.4; pointer-events: none; }
+  .size-btn {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+  .size-btn:hover { border-color: var(--purple); color: var(--purple); }
+  .size-btn:active { transform: scale(0.92); }
+  .stepper-row .num {
+    color: var(--purple);
+    font-size: 15px; font-weight: 500;
+    min-width: 14px; text-align: center;
+  }
+
+  /* Picker trigger (looks like value chip with chevron) */
+  .picker-trigger {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px 6px 12px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    max-width: 220px;
+  }
+  .picker-trigger:hover { border-color: var(--op-color); }
+  .picker-trigger.op-accent {
+    background: var(--op-color-soft);
+    border-color: var(--op-color-line);
+    color: var(--op-color);
+  }
+  .picker-trigger .value {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .picker-trigger svg {
+    width: 12px; height: 12px;
+    flex-shrink: 0;
+    color: var(--text-faint);
+    transition: transform 0.2s ease;
+  }
+  .picker-trigger.op-accent svg { color: var(--op-color); }
+
+  /* MATRIX */
+  .matrix-wrap {
+    display: flex; justify-content: center;
+    padding: 0 16px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+  .matrix-card {
+    flex: 0 0 auto;
+    width: 220px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px;
+  }
+  .matrix-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px; padding: 0 2px;
+  }
+  .matrix-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px; font-weight: 500;
+    color: var(--op-color);
+    letter-spacing: 0.5px;
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .matrix-label .dim {
+    font-size: 10px;
+    color: var(--text-faint);
+    font-weight: 400;
+  }
+  .matrix-actions { display: flex; gap: 4px; }
+  .mx-act {
+    width: 24px; height: 24px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .mx-act:hover { border-color: var(--text-dim); color: var(--text); }
+  .mx-act svg { width: 11px; height: 11px; }
+
+  .matrix-grid {
+    display: grid; gap: 4px; padding: 2px;
+  }
+  .cell {
+    aspect-ratio: 1;
+    background: var(--bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .cell:empty::before { content: '·'; color: var(--cell-empty); opacity: 0.6; }
+  .cell.filled { color: var(--text); }
+  /* Highlight row/col based on Decomposition selection */
+  .cell.highlight {
+    border-color: var(--op-color);
+    background: var(--op-color-soft);
+  }
+
+  /* SOLVE */
+  .solve-area {
+    margin-top: auto;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border-soft);
+    flex-shrink: 0;
+  }
+  .solve-btn {
+    width: 100%; height: 56px;
+    background: var(--purple);
+    color: var(--solve-text);
+    border: 0; border-radius: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 15px; font-weight: 500;
+    letter-spacing: 0.5px;
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 30px rgba(139, 139, 255, 0.3);
+  }
+  .phone.light .solve-btn { box-shadow: 0 10px 30px rgba(92, 92, 214, 0.35); }
+  .solve-btn:hover { filter: brightness(1.08); }
+  .solve-btn:active { transform: translateY(1px); }
+  .solve-btn .eq { opacity: 0.6; font-weight: 400; }
+
+  .home-indicator {
+    position: absolute;
+    bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px;
+    background: var(--text);
+    border-radius: 3px;
+    opacity: 0.9;
+    z-index: 30;
+  }
+
+  /* =========================================================================
+     PICKER MODAL (bottom sheet inside phone frame)
+     ========================================================================= */
+  .modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+
+  .picker-sheet {
+    position: absolute;
+    left: 12px; right: 12px; bottom: 12px;
+    z-index: 25;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 8px;
+    transform: translateY(calc(100% + 12px));
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    max-height: 70%;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .picker-sheet::-webkit-scrollbar { display: none; }
+  .picker-sheet.open { transform: translateY(0); }
+
+  .picker-header {
+    padding: 10px 12px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .picker-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .picker-close {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .picker-close svg { width: 12px; height: 12px; }
+
+  .picker-option {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 13px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .picker-option:hover { background: var(--bg-elev-2); }
+  .picker-option.selected {
+    background: var(--op-color-soft);
+  }
+  .picker-option-main {
+    display: flex; flex-direction: column; gap: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .picker-option.selected .picker-option-main { color: var(--op-color); }
+  .picker-option .note {
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    color: var(--text-faint);
+    margin-top: 2px;
+    letter-spacing: 0.2px;
+  }
+  .picker-option.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .picker-option.disabled:hover { background: transparent; }
+  .picker-check {
+    width: 18px; height: 18px;
+    color: var(--op-color);
+    flex-shrink: 0;
+    opacity: 0;
+  }
+  .picker-option.selected .picker-check { opacity: 1; }
+
+  /* Hint banner under method (when Sarrus forces size=3) */
+  .method-hint {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
+    opacity: 0;
+  }
+  .method-hint.visible {
+    max-height: 40px;
+    padding: 6px 0;
+    opacity: 1;
+  }
+  .method-hint-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--op-color);
+    letter-spacing: 0.3px;
+    padding: 6px 10px;
+    background: var(--op-color-soft);
+    border: 1px solid var(--op-color-line);
+    border-radius: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .method-hint-text svg { width: 11px; height: 11px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+  <div class="controls-hint">matrix determinant · det A</div>
+  <div class="toggle" id="theme-toggle">
+    <button data-theme="dark" class="active">Dark</button>
+    <button data-theme="light">Light</button>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="island"></div>
+
+    <div class="status-bar">
+      <span>11:27</span>
+      <div class="status-icons">
+        <span style="font-size:13px;letter-spacing:.5px;">•••</span>
+        <svg viewBox="0 0 16 10" fill="none"><path d="M14 1v8M11 3v6M8 5v4M5 6v3M2 7v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 22 10" fill="none">
+          <rect x="1" y="1" width="17" height="8" rx="2" stroke="currentColor" stroke-width="1"/>
+          <rect x="2.5" y="2.5" width="14" height="5" rx="1" fill="currentColor"/>
+          <rect x="19" y="3.5" width="1.5" height="3" rx="0.5" fill="currentColor"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="nav-title">
+        <span>Matrix</span><span class="sep">·</span><span class="op">det</span>
+      </div>
+      <button class="nav-btn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4M6 10l6-6 6 6M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="config-card">
+      <!-- Size -->
+      <div class="config-row">
+        <span class="config-label">Size of matrix A</span>
+        <div class="stepper-row" id="size-stepper">
+          <button class="size-btn" data-delta="-1">−</button>
+          <span class="num" id="size-num">4</span>
+          <button class="size-btn" data-delta="1">+</button>
+        </div>
+      </div>
+
+      <!-- Method (picker) -->
+      <div class="config-row">
+        <span class="config-label">Method</span>
+        <div class="picker-trigger op-accent" id="method-trigger">
+          <span class="value" id="method-value">Decomposition</span>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- Method hint (for Sarrus) -->
+      <div class="method-hint" id="method-hint">
+        <div class="method-hint-text">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Sarrus works only for 3×3 matrices
+        </div>
+      </div>
+
+      <!-- Conditional: Decompose by (Row/Column) — only for Decomposition -->
+      <div class="config-row conditional" id="decompose-by-row">
+        <span class="config-label">Decompose by</span>
+        <div class="picker-trigger" id="decompose-by-trigger">
+          <span class="value" id="decompose-by-value">Row</span>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- Conditional: Row/Column number — only for Decomposition -->
+      <div class="config-row conditional" id="index-row">
+        <span class="config-label" id="index-label">Row number</span>
+        <div class="stepper-row">
+          <button class="size-btn" data-index-delta="-1">−</button>
+          <span class="num" id="index-num">1</span>
+          <button class="size-btn" data-index-delta="1">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MATRIX -->
+    <div class="matrix-wrap">
+      <div class="matrix-card">
+        <div class="matrix-header">
+          <span class="matrix-label">A <span class="dim" id="a-dim">4×4</span></span>
+          <div class="matrix-actions">
+            <button class="mx-act" title="Fullscreen"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+            <button class="mx-act" title="Copy"><svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+            <button class="mx-act" title="Paste"><svg viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="12" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 3h6v3H9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+        <div class="matrix-grid" id="gridA"></div>
+      </div>
+    </div>
+
+    <div class="solve-area">
+      <button class="solve-btn">
+        <span class="eq">=</span>
+        <span>solve</span>
+      </button>
+    </div>
+
+    <!-- Picker modal backdrop -->
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+
+    <!-- Method picker sheet -->
+    <div class="picker-sheet" id="method-sheet">
+      <div class="picker-header">
+        <span class="picker-title">Select method</span>
+        <button class="picker-close" data-close-picker>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="picker-option" data-method="decomposition">
+        <div class="picker-option-main">
+          Decomposition
+          <span class="note">cofactor expansion by row or column</span>
+        </div>
+        <svg class="picker-check" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="picker-option" data-method="triangular">
+        <div class="picker-option-main">
+          Triangular Form
+          <span class="note">gaussian elimination</span>
+        </div>
+        <svg class="picker-check" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="picker-option" data-method="sarrus">
+        <div class="picker-option-main">
+          Sarrus
+          <span class="note">only for 3×3 matrices</span>
+        </div>
+        <svg class="picker-check" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="picker-option" data-method="montante">
+        <div class="picker-option-main">
+          Montante
+          <span class="note">bareiss algorithm · integer-preserving</span>
+        </div>
+        <svg class="picker-check" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <!-- Decompose-by picker sheet -->
+    <div class="picker-sheet" id="decompose-sheet">
+      <div class="picker-header">
+        <span class="picker-title">Decompose by</span>
+        <button class="picker-close" data-close-picker>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="picker-option" data-decompose="row">
+        <div class="picker-option-main">Row</div>
+        <svg class="picker-check" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="picker-option" data-decompose="column">
+        <div class="picker-option-main">Column</div>
+        <svg class="picker-check" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+<script>
+  const METHOD_LABELS = {
+    decomposition: 'Decomposition',
+    triangular: 'Triangular Form',
+    sarrus: 'Sarrus',
+    montante: 'Montante',
+  };
+
+  let state = {
+    size: 4,
+    method: 'decomposition', // decomposition | triangular | sarrus | montante
+    decomposeBy: 'row',      // row | column
+    index: 1,                 // row/column number
+  };
+
+  // ==========================================================================
+  // RENDER
+  // ==========================================================================
+  function render() {
+    // Size
+    document.getElementById('size-num').textContent = state.size;
+    document.getElementById('a-dim').textContent = `${state.size}×${state.size}`;
+
+    // Clamp index to current size
+    if (state.index > state.size) state.index = state.size;
+    if (state.index < 1) state.index = 1;
+    document.getElementById('index-num').textContent = state.index;
+
+    // Method value
+    document.getElementById('method-value').textContent = METHOD_LABELS[state.method];
+
+    // Update method options (enabled/disabled for Sarrus at non-3 sizes)
+    document.querySelectorAll('.picker-option[data-method]').forEach(opt => {
+      const m = opt.dataset.method;
+      opt.classList.toggle('selected', m === state.method);
+      if (m === 'sarrus') {
+        opt.classList.toggle('disabled', state.size !== 3 && state.method !== 'sarrus');
+      }
+    });
+    document.querySelectorAll('.picker-option[data-decompose]').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.decompose === state.decomposeBy);
+    });
+
+    // Conditional rows (Decomposition only)
+    const isDecomp = state.method === 'decomposition';
+    document.getElementById('decompose-by-row').classList.toggle('visible', isDecomp);
+    document.getElementById('index-row').classList.toggle('visible', isDecomp);
+
+    // Decompose-by value
+    document.getElementById('decompose-by-value').textContent =
+      state.decomposeBy === 'row' ? 'Row' : 'Column';
+    document.getElementById('index-label').textContent =
+      state.decomposeBy === 'row' ? 'Row number' : 'Column number';
+
+    // Sarrus hint + lock size stepper
+    const isSarrus = state.method === 'sarrus';
+    document.getElementById('method-hint').classList.toggle('visible', isSarrus);
+    document.getElementById('size-stepper').classList.toggle('disabled', isSarrus);
+
+    // Matrix grid
+    makeGrid(state.size);
+  }
+
+  function makeGrid(n) {
+    const grid = document.getElementById('gridA');
+    grid.innerHTML = '';
+    grid.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+    grid.style.gridTemplateRows = `repeat(${n}, 1fr)`;
+    const total = n * n;
+    for (let i = 0; i < total; i++) {
+      const r = Math.floor(i / n) + 1;
+      const c = (i % n) + 1;
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+
+      // Highlight selected row/column for Decomposition method
+      if (state.method === 'decomposition') {
+        if (state.decomposeBy === 'row' && r === state.index) {
+          cell.classList.add('highlight');
+        } else if (state.decomposeBy === 'column' && c === state.index) {
+          cell.classList.add('highlight');
+        }
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  // ==========================================================================
+  // INTERACTIONS
+  // ==========================================================================
+
+  // Size stepper
+  document.querySelectorAll('#size-stepper .size-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const delta = parseInt(btn.dataset.delta, 10);
+      const next = state.size + delta;
+      if (next >= 1 && next <= 10) {
+        state.size = next;
+        render();
+      }
+    });
+  });
+
+  // Index stepper
+  document.querySelectorAll('.size-btn[data-index-delta]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const delta = parseInt(btn.dataset.indexDelta, 10);
+      const next = state.index + delta;
+      if (next >= 1 && next <= state.size) {
+        state.index = next;
+        render();
+      }
+    });
+  });
+
+  // Picker opening
+  const backdrop = document.getElementById('modal-backdrop');
+  const methodSheet = document.getElementById('method-sheet');
+  const decomposeSheet = document.getElementById('decompose-sheet');
+
+  function openPicker(sheet) {
+    backdrop.classList.add('open');
+    sheet.classList.add('open');
+  }
+  function closeAllPickers() {
+    backdrop.classList.remove('open');
+    methodSheet.classList.remove('open');
+    decomposeSheet.classList.remove('open');
+  }
+
+  document.getElementById('method-trigger').addEventListener('click', () => openPicker(methodSheet));
+  document.getElementById('decompose-by-trigger').addEventListener('click', () => openPicker(decomposeSheet));
+  backdrop.addEventListener('click', closeAllPickers);
+  document.querySelectorAll('[data-close-picker]').forEach(b => b.addEventListener('click', closeAllPickers));
+
+  // Method picker
+  document.querySelectorAll('.picker-option[data-method]').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (opt.classList.contains('disabled')) return;
+      const m = opt.dataset.method;
+      state.method = m;
+      // Sarrus → force size = 3
+      if (m === 'sarrus') state.size = 3;
+      render();
+      closeAllPickers();
+    });
+  });
+
+  // Decompose-by picker
+  document.querySelectorAll('.picker-option[data-decompose]').forEach(opt => {
+    opt.addEventListener('click', () => {
+      state.decomposeBy = opt.dataset.decompose;
+      render();
+      closeAllPickers();
+    });
+  });
+
+  // Theme
+  const phone = document.getElementById('phone');
+  document.getElementById('theme-toggle').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    phone.classList.toggle('light', btn.dataset.theme === 'light');
+    document.getElementById('theme-toggle').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+
+  render();
+</script>
+
+</body>
+</html>
